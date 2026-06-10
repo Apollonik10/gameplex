@@ -1,35 +1,51 @@
 import { supabase } from "@/lib/supabase/client";
 import HeroBanner from "@/components/hero-banner/HeroBanner";
+import Carousel from "@/components/carousel/Carousel";
 
-async function getFeaturedGame() {
-  const { data, error } = await supabase
+async function getHomeData() {
+  // 1. Buscar o jogo de destaque (Hero)
+  const { data: featuredGame } = await supabase
     .from("games")
     .select("*")
     .limit(1)
     .single();
 
-  if (error) return null;
-  return data;
+  // 2. Buscar plataformas que têm jogos
+  const { data: platforms } = await supabase
+    .from("platforms")
+    .select(`
+      id,
+      name,
+      games (*)
+    `);
+
+  return { featuredGame, platforms };
 }
 
 export default async function Home() {
-  const featuredGame = await getFeaturedGame();
+  const { featuredGame, platforms } = await getHomeData();
 
   return (
-    <main className="flex min-h-screen flex-col bg-zinc-950">
+    <main className="flex min-h-screen flex-col bg-zinc-950 pb-20 overflow-x-hidden">
+      {/* Hero Banner */}
       <HeroBanner game={featuredGame} />
       
-      {/* Aqui virão os carrosséis na sequência */}
-      <section className="mt-[-100px] relative z-20 pb-20">
-        {/* Placeholder para os carrosséis */}
-        <div className="px-6 md:px-16 space-y-8">
-          <div className="h-6 w-48 bg-zinc-800 rounded animate-pulse" />
-          <div className="flex gap-4 overflow-hidden">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-64 w-44 bg-zinc-900 rounded-md shrink-0 animate-pulse" />
-            ))}
+      {/* Carrosséis por Plataforma */}
+      <section className="mt-[-100px] relative z-20">
+        {platforms?.map((platform) => (
+          <Carousel 
+            key={platform.id} 
+            title={platform.name} 
+            games={platform.games} 
+          />
+        ))}
+
+        {/* Fallback caso não haja plataformas ou jogos */}
+        {(!platforms || platforms.length === 0) && (
+          <div className="px-6 md:px-16 text-zinc-500">
+            Nenhum jogo encontrado no catálogo.
           </div>
-        </div>
+        )}
       </section>
     </main>
   );
