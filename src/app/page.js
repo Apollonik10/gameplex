@@ -1,52 +1,69 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import HeroBanner from "@/components/hero-banner/HeroBanner";
 import Carousel from "@/components/carousel/Carousel";
+import GameCard from "@/components/game-card/GameCard";
+import { useGameStore } from "@/store/useGameStore";
 
-async function getHomeData() {
-  // 1. Buscar o jogo de destaque (Hero)
-  const { data: featuredGame } = await supabase
-    .from("games")
-    .select("*")
-    .limit(1)
-    .single();
+export default function Home() {
+  const [data, setData] = useState({ featuredGame: null, platforms: [] });
+  const [filteredGames, setFilteredGames] = useState([]);
+  const { searchQuery } = useGameStore();
 
-  // 2. Buscar plataformas que têm jogos
-  const { data: platforms } = await supabase
-    .from("platforms")
-    .select(`
-      id,
-      name,
-      games (*)
-    `);
+  useEffect(() => {
+    async function fetchData() {
+      const { data: featured } = await supabase.from("games").select("*").limit(1).single();
+      const { data: plats } = await supabase.from("platforms").select(`id, name, games (*)`);
+      setData({ featuredGame: featured, platforms: plats || [] });
+    }
+    fetchData();
+  }, []);
 
-  return { featuredGame, platforms };
-}
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredGames([]);
+      return;
+    }
 
-export default async function Home() {
-  const { featuredGame, platforms } = await getHomeData();
+    const allGames = data.platforms.flatMap(p => p.games);
+    const filtered = allGames.filter(g => 
+      g.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredGames(filtered);
+  }, [searchQuery, data.platforms]);
 
   return (
     <main className="flex min-h-screen flex-col bg-zinc-950 pb-20 overflow-x-hidden">
-      {/* Hero Banner */}
-      <HeroBanner game={featuredGame} />
-      
-      {/* Carrosséis por Plataforma */}
-      <section className="mt-[-100px] relative z-20">
-        {platforms?.map((platform) => (
-          <Carousel 
-            key={platform.id} 
-            title={platform.name} 
-            games={platform.games} 
-          />
-        ))}
-
-        {/* Fallback caso não haja plataformas ou jogos */}
-        {(!platforms || platforms.length === 0) && (
-          <div className="px-6 md:px-16 text-zinc-500">
-            Nenhum jogo encontrado no catálogo.
+      {searchQuery.trim() === "" ? (
+        <>
+          <HeroBanner game={data.featuredGame} />
+          <section className="mt-[-100px] relative z-20">
+            {data.platforms.map((platform) => (
+              <Carousel 
+                key={platform.id} 
+                title={platform.name} 
+                games={platform.games} 
+              />
+            ))}
+          </section>
+        </>
+      ) : (
+        <section className="pt-32 px-6 md:px-16">
+          <h2 className="text-2xl font-semibold text-white mb-8">
+            Resultados para: <span className="text-zinc-400 italic">"{searchQuery}"</span>
+          </h2>
+          <div className="flex flex-wrap gap-6">
+            {filteredGames.map(game => (
+              <GameCard key={game.id} game={game} />
+            ))}
+            {filteredGames.length === 0 && (
+              <p className="text-zinc-500">Nenhum jogo encontrado para essa busca.</p>
+            )}
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </main>
   );
 }
