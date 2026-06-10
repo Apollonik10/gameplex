@@ -2,7 +2,7 @@
 create table platforms (
   id            uuid primary key default gen_random_uuid(),
   name          text not null,
-  short_name    text not null,
+  short_name    text not null unique,
   logo_url      text,
   brand_color   text,
   manufacturer  text,
@@ -75,11 +75,25 @@ alter table glossary enable row level security;
 alter table user_lists enable row level security;
 
 -- Políticas de Leitura Pública
+drop policy if exists "Platforms are viewable by everyone" on platforms;
 create policy "Platforms are viewable by everyone" on platforms for select using (true);
+create policy "Enable insert for authenticated users only" on platforms for insert with check (auth.role() = 'authenticated');
+create policy "Enable update for authenticated users only" on platforms for update using (auth.role() = 'authenticated');
+
+drop policy if exists "Games are viewable by everyone" on games;
 create policy "Games are viewable by everyone" on games for select using (true);
+create policy "Enable insert for authenticated users only" on games for insert with check (auth.role() = 'authenticated');
+
+drop policy if exists "Videos are viewable by everyone" on game_videos;
 create policy "Videos are viewable by everyone" on game_videos for select using (true);
+
+drop policy if exists "Screenshots are viewable by everyone" on game_screenshots;
 create policy "Screenshots are viewable by everyone" on game_screenshots for select using (true);
+
+drop policy if exists "Glossary is viewable by everyone" on glossary;
 create policy "Glossary is viewable by everyone" on glossary for select using (true);
+create policy "Enable insert for authenticated users only" on glossary for insert with check (auth.role() = 'authenticated');
+
 
 -- Política de Usuário para Favoritos
 create policy "Users can manage their own lists" on user_lists
