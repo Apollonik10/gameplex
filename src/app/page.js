@@ -1,42 +1,75 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import HeroBanner from "@/components/hero-banner/HeroBanner";
 import Carousel from "@/components/carousel/Carousel";
 import GameCard from "@/components/game-card/GameCard";
 import { useGameStore } from "@/store/useGameStore";
+import { useDebounce } from "@/hooks/useDebounce";
 
-export default function Home() {
+function HomeContent() {
   const [data, setData] = useState({ featuredGame: null, platforms: [] });
   const [filteredGames, setFilteredGames] = useState([]);
   const { searchQuery } = useGameStore();
+  
+  // ✅ NOVO: debounce de 300ms no search
+  const debouncedQuery = useDebounce(searchQuery, 300);
+
+  // ✅ NOVO: filtros por URL
+  const searchParams = useSearchParams();
+  const genreFilter = searchParams.get("genre");
+  const platformFilter = searchParams.get("platform");
 
   useEffect(() => {
     async function fetchData() {
-      const { data: featured } = await supabase.from("games").select("*").limit(1).single();
-      const { data: plats } = await supabase.from("platforms").select(`id, name, games (*)`);
+      const { data: featured } = await supabase
+        .from("games")
+        .select("*")
+        .limit(1)
+        .single();
+
+      let query = supabase.from("platforms").select(`id, name, games (*)`);
+      if (platformFilter) {
+        query = supabase
+          .from("platforms")
+          .select(`id, name, games (*)`)
+          .eq("short_name", platformFilter);
+      }
+
+      const { data: plats } = await query;
       setData({ featuredGame: featured, platforms: plats || [] });
     }
     fetchData();
-  }, []);
+  }, [platformFilter]);
 
   useEffect(() => {
-    if (searchQuery.trim() === "") {
+    if (debouncedQuery.trim() === "") {
       setFilteredGames([]);
       return;
     }
 
-    const allGames = data.platforms.flatMap(p => p.games);
-    const filtered = allGames.filter(g => 
-      g.title.toLowerCase().includes(searchQuery.toLowerCase())
+    let allGames = data.platforms.flatMap((p) => p.games);
+
+    // ✅ NOVO: filtro por gênero
+    if (genreFilter) {
+      allGames = allGames.filter((g) =>
+        g.genre?.some((genre) =>
+          genre.toLowerCase().includes(genreFilter.toLowerCase())
+        )
+      );
+    }
+
+    const filtered = allGames.filter((g) =>
+      g.title.toLowerCase().includes(debouncedQuery.toLowerCase())
     );
     setFilteredGames(filtered);
-  }, [searchQuery, data.platforms]);
+  }, [debouncedQuery, data.platforms, genreFilter]);
 
   return (
     <main className="flex min-h-screen flex-col bg-zinc-950 pb-20 overflow-x-hidden">
-      {searchQuery.trim() === "" ? (
+      {debouncedQuery.trim() === "" ? (
         <>
           <HeroBanner game={data.featuredGame} />
           <section className="mt-[-100px] relative z-20">
@@ -52,7 +85,7 @@ export default function Home() {
       ) : (
         <section className="pt-32 px-6 md:px-16">
           <h2 className="text-2xl font-semibold text-white mb-8">
-            Resultados para: <span className="text-zinc-400 italic">"{searchQuery}"</span>
+            Resultados para: <span className="text-zinc-400 italic">"{debouncedQuery}"</span>
           </h2>
           <div className="flex flex-wrap gap-6">
             {filteredGames.map(game => (
@@ -65,5 +98,13 @@ export default function Home() {
         </section>
       )}
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }

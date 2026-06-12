@@ -3,12 +3,29 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
+const EMULATORJS_CORES = {
+  'SNES': { core: 'snes9x', extensions: ['.sfc', '.smc', '.zip'] },
+  'NES':  { core: 'fceumm', extensions: ['.nes', '.zip'] },
+  'GB':   { core: 'gambatte', extensions: ['.gb', '.zip'] },
+  'GBC':  { core: 'gambatte', extensions: ['.gbc', '.gb', '.zip'] },
+  'GBA':  { core: 'mgba', extensions: ['.gba', '.zip'] },
+  'N64':  { core: 'mupen64plus', extensions: ['.n64', '.z64', '.v64'] },
+  'PS1':  { core: 'pcsx_rearmed', extensions: ['.bin', '.cue', '.iso'] },
+  'Genesis': { core: 'genesis_plus_gx', extensions: ['.gen', '.md', '.zip'] },
+  'SMS':  { core: 'genesis_plus_gx', extensions: ['.sms', '.zip'] },
+  'GG':   { core: 'genesis_plus_gx', extensions: ['.gg', '.zip'] },
+  'PSP':  { core: 'ppsspp', extensions: ['.iso', '.cso', '.pbp'] },
+  'Atari2600': { core: 'stella', extensions: ['.a26', '.bin', '.zip'] },
+  'NeoGeo': { core: 'fbneo', extensions: ['.zip'] },
+  'MAME': { core: 'mame2003', extensions: ['.zip', '.chd'] },
+};
+
 export default function EmulatorPlayer({ game, onClose }) {
   const containerRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
-  // NOTA: Em um projeto real, você teria os arquivos do core e da rom localmente ou via CDN confiável.
-  // Aqui estamos preparando a estrutura para o EmulatorJS.
+  const platformShortName = game.platforms?.short_name;
+  const coreInfo = EMULATORJS_CORES[platformShortName] || { core: 'unknown', extensions: [] };
   
   useEffect(() => {
     // Bloquear scroll do body
@@ -36,14 +53,14 @@ export default function EmulatorPlayer({ game, onClose }) {
         {loading ? (
           <div className="flex h-full flex-col items-center justify-center gap-4">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-red-600 border-t-transparent" />
-            <p className="text-zinc-400 font-mono tracking-widest uppercase">Iniciando Core {game.platforms?.short_name}...</p>
+            <p className="text-zinc-400 font-mono tracking-widest uppercase">Iniciando Core {coreInfo.core}...</p>
           </div>
         ) : (
           <div className="flex h-full flex-col items-center justify-center p-12 text-center">
             <h2 className="text-3xl font-bold mb-4">Emulator Engine Ready</h2>
             <p className="text-zinc-500 max-w-md mb-8">
-              O núcleo do {game.platforms?.name} foi carregado. 
-              Para rodar <strong>{game.title}</strong> legalmente, o arquivo .sfc/.smc deve ser mapeado no sistema.
+              O núcleo do {game.platforms?.name} ({coreInfo.core}) foi carregado. 
+              Para rodar <strong>{game.title}</strong> legalmente, um arquivo com extensões {coreInfo.extensions.join(", ")} deve ser mapeado no sistema.
             </p>
             <div className="grid grid-cols-2 gap-4 text-xs font-mono text-zinc-600">
               <div className="p-2 border border-zinc-800">CONTROLES: SETAS</div>
