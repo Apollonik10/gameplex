@@ -1,5 +1,6 @@
 import withPWAInit from "@ducanh2912/next-pwa";
 
+// Next.js configuration using ESM
 const withPWA = withPWAInit({
   dest: "public",
   cacheOnFrontEndNav: true,
@@ -14,7 +15,8 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configurações base do Next.js
+  // Base configuration
+  reactStrictMode: true,
 };
 
 export default withPWA(nextConfig);
