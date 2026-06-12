@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import GameDetailsContent from "./GameDetailsContent";
+import { enrichGame } from "@/lib/enrichment";
 
 async function getGameDetails(slug) {
   const { data, error } = await supabase
@@ -14,6 +15,27 @@ async function getGameDetails(slug) {
     .single();
 
   if (error) return null;
+
+  // Se o jogo não tem screenshots ou vídeos, tenta enriquecer on-demand
+  if (!data.game_screenshots?.length || !data.game_videos?.length) {
+    console.log(`Enriquecendo ${data.title} on-demand...`);
+    await enrichGame(data.id);
+    
+    // Busca novamente para pegar os dados novos
+    const { data: updatedData } = await supabase
+      .from("games")
+      .select(`
+        *,
+        platforms (*),
+        game_videos (*),
+        game_screenshots (*)
+      `)
+      .eq("id", data.id)
+      .single();
+    
+    return updatedData || data;
+  }
+
   return data;
 }
 
