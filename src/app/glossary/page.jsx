@@ -1,14 +1,8 @@
-import { supabase } from "@/lib/supabase/client";
-import { Search, Book, Cpu, Layers, Zap } from "lucide-react";
-import Link from "next/link";
+"use client";
 
-async function getGlossary() {
-  const { data } = await supabase
-    .from("glossary")
-    .select("*")
-    .order("term");
-  return data || [];
-}
+import { Search, Book, Cpu, Layers, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
 
 const CATEGORY_ICONS = {
   "Hardware": <Cpu size={18} />,
@@ -17,8 +11,29 @@ const CATEGORY_ICONS = {
   "Geral": <Book size={18} />,
 };
 
-export default async function GlossaryPage() {
-  const glossary = await getGlossary();
+export default function GlossaryPage() {
+  const [glossary, setGlossary] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchGlossary() {
+      const { data } = await supabase
+        .from("glossary")
+        .select("*")
+        .order("term");
+      setGlossary(data || []);
+      setLoading(false);
+    }
+    fetchGlossary();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-zinc-950 text-white pt-32 pb-20 px-6 md:px-16 flex items-center justify-center">
+        <p className="text-zinc-500 animate-pulse">Carregando glossário...</p>
+      </main>
+    );
+  }
 
   const grouped = glossary.reduce((acc, item) => {
     const firstLetter = item.term[0].toUpperCase();

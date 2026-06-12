@@ -5,6 +5,7 @@ import { Search, Bell, User, Menu, LogOut } from "lucide-react";
 import { useGameStore } from "@/store/useGameStore";
 import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
+import Image from "next/image";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -77,9 +78,14 @@ export default function Navbar() {
         
         {user ? (
           <div className="group relative flex items-center gap-2">
-            <div className="h-8 w-8 overflow-hidden rounded bg-zinc-800 cursor-pointer">
+            <div className="h-8 w-8 overflow-hidden rounded bg-zinc-800 cursor-pointer relative">
               {user.user_metadata.avatar_url ? (
-                <img src={user.user_metadata.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                <Image 
+                  src={user.user_metadata.avatar_url} 
+                  alt="Avatar" 
+                  fill 
+                  className="object-cover" 
+                />
               ) : (
                 <User className="h-full w-full p-1" />
               )}

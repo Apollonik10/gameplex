@@ -13,7 +13,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 function HomeContent() {
   const [data, setData] = useState({ featuredGame: null, platforms: [] });
   const [loading, setLoading] = useState(true);
-  const [filteredGames, setFilteredGames] = useState([]);
   const { searchQuery } = useGameStore();
   
   // ✅ NOVO: debounce de 300ms no search
@@ -51,11 +50,9 @@ function HomeContent() {
     fetchData();
   }, [platformFilter]);
 
-  useEffect(() => {
-    if (debouncedQuery.trim() === "") {
-      setFilteredGames([]);
-      return;
-    }
+  // ✅ Compute filteredGames during render to avoid cascading renders
+  const filteredGames = (() => {
+    if (debouncedQuery.trim() === "") return [];
 
     let allGames = data.platforms.flatMap((p) => p.games);
 
@@ -68,11 +65,10 @@ function HomeContent() {
       );
     }
 
-    const filtered = allGames.filter((g) =>
+    return allGames.filter((g) =>
       g.title.toLowerCase().includes(debouncedQuery.toLowerCase())
     );
-    setFilteredGames(filtered);
-  }, [debouncedQuery, data.platforms, genreFilter]);
+  })();
 
   if (loading) {
     return (
@@ -102,7 +98,7 @@ function HomeContent() {
       ) : (
         <section className="pt-32 px-6 md:px-16">
           <h2 className="text-2xl font-semibold text-white mb-8">
-            Resultados para: <span className="text-zinc-400 italic">"{debouncedQuery}"</span>
+            Resultados para: <span className="text-zinc-400 italic">&quot;{debouncedQuery}&quot;</span>
           </h2>
           <div className="flex flex-wrap gap-6">
             {filteredGames.map(game => (

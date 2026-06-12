@@ -245,7 +245,7 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               Legacy Note
             </h3>
             <p className="text-sm text-zinc-400 leading-relaxed italic relative z-10">
-              "Este título definiu o padrão ouro para {game.platforms?.name}. Cada pixel e cada trilha sonora foram projetados para empurrar o hardware ao seu limite absoluto."
+              &quot;Este título definiu o padrão ouro para {game.platforms?.name}. Cada pixel e cada trilha sonora foram projetados para empurrar o hardware ao seu limite absoluto.&quot;
             </p>
           </div>
         </div>
