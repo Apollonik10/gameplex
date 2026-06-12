@@ -6,7 +6,9 @@ async function getGameDetails(slug) {
     .from("games")
     .select(`
       *,
-      platforms (*)
+      platforms (*),
+      game_videos (*),
+      game_screenshots (*)
     `)
     .eq("slug", slug)
     .single();
@@ -15,9 +17,17 @@ async function getGameDetails(slug) {
   return data;
 }
 
+async function getGlossary() {
+  const { data } = await supabase.from("glossary").select("*");
+  return data || [];
+}
+
 export default async function GamePage({ params }) {
   const { slug } = params;
-  const game = await getGameDetails(slug);
+  const [game, glossary] = await Promise.all([
+    getGameDetails(slug),
+    getGlossary()
+  ]);
 
   if (!game) {
     return (
@@ -27,5 +37,5 @@ export default async function GamePage({ params }) {
     );
   }
 
-  return <GameDetailsContent game={game} />;
+  return <GameDetailsContent game={game} glossary={glossary} />;
 }

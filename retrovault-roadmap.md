@@ -205,36 +205,37 @@ create table user_lists (
 ## Sequência de Build — 5 Semanas
 
 ### Semana 1 — Setup & Fundação
-- [ ] Criar projeto: `npx create-next-app@latest retrovault --typescript --tailwind --app`
-- [ ] Instalar dependências: `framer-motion embla-carousel-react @supabase/supabase-js zustand @tanstack/react-query`
-- [ ] Configurar Supabase: criar projeto, copiar URL + anon key para `.env.local`
-- [ ] Rodar migration SQL inicial no Supabase Studio
-- [ ] Seed manual de ~10 jogos e 4–5 plataformas para testes
-- [ ] Configurar PWA: `manifest.json` + `next-pwa` ou `@ducanh2912/next-pwa`
-- [ ] Dark theme base no Tailwind (`darkMode: 'class'`)
+- [x] Criar projeto: `npx create-next-app@latest retrovault --typescript --tailwind --app`
+- [x] Instalar dependências: `framer-motion embla-carousel-react @supabase/supabase-js zustand @tanstack/react-query`
+- [x] Configurar Supabase: criar projeto, copiar URL + anon key para `.env.local`
+- [x] Rodar migration SQL inicial no Supabase Studio
+- [x] Seed manual de ~10 jogos e 4–5 plataformas para testes
+- [x] Configurar PWA: `manifest.json` + `next-pwa` ou `@ducanh2912/next-pwa`
+- [x] Dark theme base no Tailwind (`darkMode: 'class'`)
 
 ### Semana 2 — Home Netflix
-- [ ] Componente `HeroBanner` com Framer Motion (parallax + fade)
-- [ ] Componente `GameCard` com hover reveal (título, plataforma, gênero)
-- [ ] Componente `Carousel` com Embla (swipe touch, setas desktop)
-- [ ] Página Home com carrosséis por plataforma buscando do Supabase
-- [ ] Barra de busca com debounce (300ms)
-- [ ] Filtros por gênero e plataforma na URL (searchParams)
+- [x] Componente `HeroBanner` com Framer Motion (parallax + fade)
+- [x] Componente `GameCard` com hover reveal (título, plataforma, gênero)
+- [x] Componente `Carousel` com Embla (swipe touch, setas desktop)
+- [x] Página Home com carrosséis por plataforma buscando do Supabase
+- [x] Barra de busca com debounce (300ms)
+- [x] Filtros por gênero e plataforma na URL (searchParams)
 
 ### Semana 3 — Página de Detalhe
-- [ ] Rota `/game/[slug]` com SSR (generateStaticParams)
-- [ ] Seção de specs técnicas renderizando o JSONB
-- [ ] Galeria de screenshots swipeable (Embla)
-- [ ] Componente `YouTubePlayer` responsivo (lazy loaded)
-- [ ] `GlossaryTooltip` — detecta termos no texto e exibe popover
-- [ ] `PlatformBadge` com cor oficial via `brand_color`
+- [x] Rota `/game/[slug]` com SSR (generateStaticParams)
+- [x] Seção de specs técnicas renderizando o JSONB
+- [x] Galeria de screenshots swipeable (Embla)
+- [x] Componente `YouTubePlayer` responsivo (lazy loaded)
+- [x] `GlossaryTooltip` — detecta termos no texto e exibe popover
+- [x] `PlatformBadge` com cor oficial via `brand_color`
+- [x] Página de Glossário com navegação por letras e categorias
 
 ### Semana 4 — APIs Externas
-- [ ] Integração RAWG: enriquecer jogos com covers, screenshots, ratings
-- [ ] Script de seed automatizado via RAWG por nome
-- [ ] YouTube Data API: buscar trailers por `{nome do jogo} {plataforma} trailer`
-- [ ] Salvar youtube_id no Supabase após busca
-- [ ] Página de Glossário com termos de emulação (PPU, VDP, DMA, blast processing…)
+- [x] Integração RAWG: enriquecer jogos com covers, screenshots, ratings
+- [x] Script de seed automatizado via RAWG por nome
+- [x] YouTube Data API: buscar trailers por `{nome do jogo} {plataforma} trailer`
+- [x] Salvar youtube_id no Supabase após busca
+- [x] Página de Glossário com termos de emulação (PPU, VDP, DMA, blast processing…)
 
 ### Semana 5 — Polish & Portfólio
 - [ ] Auth Supabase (magic link ou Google OAuth)
