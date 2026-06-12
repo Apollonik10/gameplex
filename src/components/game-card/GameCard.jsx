@@ -2,11 +2,40 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Play, Plus, ChevronDown } from "lucide-react";
+import { Play, Heart, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import { useFavorites } from "@/hooks/useFavorites";
+import { supabase } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
 
 export default function GameCard({ game }) {
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+  }, []);
+
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites(user?.id);
+
   if (!game) return null;
+
+  const favorite = isFavorite(game.id);
+
+  const toggleFavorite = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      alert("Você precisa estar logado para favoritar um jogo.");
+      return;
+    }
+    if (favorite) {
+      removeFavorite.mutate(game.id);
+    } else {
+      addFavorite.mutate(game.id);
+    }
+  };
 
   return (
     <motion.div
@@ -31,15 +60,20 @@ export default function GameCard({ game }) {
         </h3>
         
         <div className="mb-3 flex gap-2">
-          <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black hover:bg-zinc-200">
+          <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black hover:bg-zinc-200 transition">
             <Play size={16} fill="currentColor" />
           </button>
-          <button className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-zinc-500 text-white hover:border-white">
-            <Plus size={16} />
+          <button 
+            onClick={toggleFavorite}
+            className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition ${
+              favorite ? "bg-red-600 border-red-600 text-white" : "border-zinc-500 text-white hover:border-white"
+            }`}
+          >
+            <Heart size={16} fill={favorite ? "currentColor" : "none"} />
           </button>
           <Link 
             href={`/game/${game.slug}`}
-            className="ml-auto flex h-8 w-8 items-center justify-center rounded-full border-2 border-zinc-500 text-white hover:border-white"
+            className="ml-auto flex h-8 w-8 items-center justify-center rounded-full border-2 border-zinc-500 text-white hover:border-white transition"
           >
             <ChevronDown size={16} />
           </Link>

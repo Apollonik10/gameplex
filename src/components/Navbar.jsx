@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Bell, User, Menu } from "lucide-react";
+import { Search, Bell, User, Menu, LogOut } from "lucide-react";
 import { useGameStore } from "@/store/useGameStore";
+import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -13,6 +14,7 @@ function cn(...inputs) {
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState(null);
   const { searchQuery, setSearchQuery } = useGameStore();
 
   useEffect(() => {
@@ -20,8 +22,25 @@ export default function Navbar() {
       setIsScrolled(window.scrollY > 0);
     };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    // Check user auth status
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <nav
@@ -55,9 +74,38 @@ export default function Navbar() {
         </div>
         
         <Bell className="cursor-pointer hover:text-zinc-400 transition" size={20} />
-        <div className="h-8 w-8 overflow-hidden rounded bg-zinc-800">
-          <User className="h-full w-full p-1" />
-        </div>
+        
+        {user ? (
+          <div className="group relative flex items-center gap-2">
+            <div className="h-8 w-8 overflow-hidden rounded bg-zinc-800 cursor-pointer">
+              {user.user_metadata.avatar_url ? (
+                <img src={user.user_metadata.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                <User className="h-full w-full p-1" />
+              )}
+            </div>
+            <div className="absolute right-0 top-full mt-2 hidden w-48 rounded border border-zinc-800 bg-black p-2 group-hover:block shadow-2xl">
+              <p className="px-3 py-2 text-xs text-zinc-400 border-b border-zinc-800 mb-2 truncate">
+                {user.email}
+              </p>
+              <button 
+                onClick={handleLogout}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-white hover:bg-zinc-900 rounded"
+              >
+                <LogOut size={16} />
+                Sair
+              </button>
+            </div>
+          </div>
+        ) : (
+          <Link 
+            href="/auth" 
+            className="rounded bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-red-700"
+          >
+            Entrar
+          </Link>
+        )}
+
         <Menu className="md:hidden cursor-pointer" size={24} />
       </div>
     </nav>

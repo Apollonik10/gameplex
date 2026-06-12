@@ -1,17 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Play, Plus, Share2, ArrowLeft, Camera, MonitorPlay } from "lucide-react";
+import { Play, Heart, Share2, ArrowLeft, Camera, MonitorPlay } from "lucide-react";
 import Link from "next/link";
 import EmulatorPlayer from "@/components/EmulatorPlayer";
 import PlatformBadge from "@/components/platform-badge/PlatformBadge";
 import YouTubePlayer from "@/components/youtube-player/YouTubePlayer";
 import GlossaryTooltip from "@/components/glossary-tooltip/GlossaryTooltip";
+import { useFavorites } from "@/hooks/useFavorites";
+import { supabase } from "@/lib/supabase/client";
 
 export default function GameDetailsContent({ game, glossary = [] }) {
   const [showEmulator, setShowEmulator] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+  }, []);
+
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites(user?.id);
   const isSNES = game.platforms?.short_name === "SNES";
+  const favorite = isFavorite(game.id);
+
+  const toggleFavorite = () => {
+    if (!user) {
+      alert("Você precisa estar logado para favoritar um jogo.");
+      return;
+    }
+    if (favorite) {
+      removeFavorite.mutate(game.id);
+    } else {
+      addFavorite.mutate(game.id);
+    }
+  };
 
   // Helper to inject glossary tooltips
   const renderDescription = (text) => {
@@ -107,9 +131,16 @@ export default function GameDetailsContent({ game, glossary = [] }) {
                     Jogar Agora
                   </button>
                 )}
-                <button className="flex items-center gap-2 rounded bg-zinc-800/80 backdrop-blur-sm px-8 py-4 font-bold hover:bg-zinc-700 transition border border-zinc-700">
-                  <Plus size={20} />
-                  Minha Lista
+                <button 
+                  onClick={toggleFavorite}
+                  className={`flex items-center gap-2 rounded px-8 py-4 font-bold transition border ${
+                    favorite 
+                      ? "bg-red-600 border-red-600 text-white" 
+                      : "bg-zinc-800/80 backdrop-blur-sm border-zinc-700 hover:bg-zinc-700 text-white"
+                  }`}
+                >
+                  <Heart size={20} fill={favorite ? "currentColor" : "none"} />
+                  {favorite ? "Na Minha Lista" : "Minha Lista"}
                 </button>
                 <button className="flex items-center justify-center rounded-full bg-zinc-800/80 backdrop-blur-sm p-4 hover:bg-zinc-700 transition border border-zinc-700">
                   <Share2 size={20} />

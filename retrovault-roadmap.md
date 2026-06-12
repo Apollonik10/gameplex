@@ -230,16 +230,16 @@ create table user_lists (
 - [x] `PlatformBadge` com cor oficial via `brand_color`
 - [x] Página de Glossário com navegação por letras e categorias
 
-### Semana 4 — APIs Externas
+### Semana 4 — COMPLETA ✅
 - [x] Integração RAWG: enriquecer jogos com covers, screenshots, ratings
 - [x] Script de seed automatizado via RAWG por nome
 - [x] YouTube Data API: buscar trailers por `{nome do jogo} {plataforma} trailer`
 - [x] Salvar youtube_id no Supabase após busca
 - [x] Página de Glossário com termos de emulação (PPU, VDP, DMA, blast processing…)
 
-### Semana 5 — Polish & Portfólio
+### Semana 5 — Polish & Portfólio (Iniciada)
 - [ ] Auth Supabase (magic link ou Google OAuth)
-- [ ] Sistema de favoritos com Realtime (coração animado)
+- [x] Sistema de favoritos (Hooks prontos, falta Realtime/UI)
 - [ ] Animações de página: `AnimatePresence` + `motion.div` em todas as rotas
 - [ ] Skeleton loaders para estados de loading
 - [ ] Testes de Lighthouse (PWA score, Performance, Accessibility)

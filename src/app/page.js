@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import CarouselSkeleton from "@/components/skeleton/CarouselSkeleton";
 import HeroBanner from "@/components/hero-banner/HeroBanner";
 import Carousel from "@/components/carousel/Carousel";
 import GameCard from "@/components/game-card/GameCard";
@@ -11,6 +12,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 function HomeContent() {
   const [data, setData] = useState({ featuredGame: null, platforms: [] });
+  const [loading, setLoading] = useState(true);
   const [filteredGames, setFilteredGames] = useState([]);
   const { searchQuery } = useGameStore();
   
@@ -24,22 +26,27 @@ function HomeContent() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data: featured } = await supabase
-        .from("games")
-        .select("*")
-        .limit(1)
-        .single();
+      setLoading(true);
+      try {
+        const { data: featured } = await supabase
+          .from("games")
+          .select("*")
+          .limit(1)
+          .single();
 
-      let query = supabase.from("platforms").select(`id, name, games (*)`);
-      if (platformFilter) {
-        query = supabase
-          .from("platforms")
-          .select(`id, name, games (*)`)
-          .eq("short_name", platformFilter);
+        let query = supabase.from("platforms").select(`id, name, games (*)`);
+        if (platformFilter) {
+          query = supabase
+            .from("platforms")
+            .select(`id, name, games (*)`)
+            .eq("short_name", platformFilter);
+        }
+
+        const { data: plats } = await query;
+        setData({ featuredGame: featured, platforms: plats || [] });
+      } finally {
+        setLoading(false);
       }
-
-      const { data: plats } = await query;
-      setData({ featuredGame: featured, platforms: plats || [] });
     }
     fetchData();
   }, [platformFilter]);
@@ -66,6 +73,16 @@ function HomeContent() {
     );
     setFilteredGames(filtered);
   }, [debouncedQuery, data.platforms, genreFilter]);
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen flex-col bg-zinc-950 pb-20 pt-32">
+        <CarouselSkeleton />
+        <CarouselSkeleton />
+        <CarouselSkeleton />
+      </main>
+    );
+  }
 
   return (
     <main className="flex min-h-screen flex-col bg-zinc-950 pb-20 overflow-x-hidden">
