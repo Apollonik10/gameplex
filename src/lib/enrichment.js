@@ -1,6 +1,6 @@
-import { supabase } from "./supabase/client"; // Note: For server side scripts, better use a service role key if available, but we'll use what we have.
-import { searchRAWGGame, getRAWGGameDetails, getRAWGGameScreenshots } from "./rawg";
-import { searchYouTubeVideo } from "./youtube";
+import { supabase } from "./supabase/client.js";
+import { searchRAWGGame, getRAWGGameDetails, getRAWGGameScreenshots } from "./rawg.js";
+import { searchYouTubeVideo } from "./youtube.js";
 
 export async function enrichGame(gameId) {
   // 1. Get game from Supabase
