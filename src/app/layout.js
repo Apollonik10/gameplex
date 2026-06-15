@@ -16,6 +16,23 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Gameplex - RetroVault",
   description: "O seu catálogo de jogos retro no estilo Netflix.",
+  manifest: "/manifest.json",
+  themeColor: "#09090b",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Gameplex",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-512.png",
+  },
 };
 
 export default function RootLayout({ children }) {
