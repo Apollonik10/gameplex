@@ -2,7 +2,7 @@
 
 import { Search, Book, Cpu, Layers, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { getGlossaryTerms } from "@/services/glossary.service";
 
 const CATEGORY_ICONS = {
   "Hardware": <Cpu size={18} />,
@@ -16,15 +16,10 @@ export default function GlossaryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchGlossary() {
-      const { data } = await supabase
-        .from("glossary")
-        .select("*")
-        .order("term");
-      setGlossary(data || []);
+    getGlossaryTerms().then((data) => {
+      setGlossary(data);
       setLoading(false);
-    }
-    fetchGlossary();
+    });
   }, []);
 
   if (loading) {
@@ -63,16 +58,16 @@ export default function GlossaryPage() {
           </div>
         ) : (
           <div className="space-y-16">
-            {letters.map(letter => (
+            {letters.map((letter) => (
               <section key={letter} className="relative">
                 <div className="sticky top-24 z-10 bg-zinc-950/80 backdrop-blur-md py-4 mb-8 border-b border-zinc-900">
                   <h2 className="text-5xl font-black text-zinc-800 leading-none">{letter}</h2>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {grouped[letter].map(item => (
-                    <div 
-                      key={item.id} 
+                  {grouped[letter].map((item) => (
+                    <div
+                      key={item.id}
                       id={item.term.toLowerCase()}
                       className="group p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 hover:border-zinc-700 transition duration-300"
                     >
@@ -81,13 +76,11 @@ export default function GlossaryPage() {
                         {item.category || "Geral"}
                       </div>
                       <h3 className="text-xl font-bold mb-3 group-hover:text-red-500 transition">{item.term}</h3>
-                      <p className="text-zinc-400 leading-relaxed text-sm">
-                        {item.definition}
-                      </p>
-                      
+                      <p className="text-zinc-400 leading-relaxed text-sm">{item.definition}</p>
+
                       {item.related_terms && item.related_terms.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
-                          {item.related_terms.map(rel => (
+                          {item.related_terms.map((rel) => (
                             <span key={rel} className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-500 uppercase font-bold">
                               {rel}
                             </span>
@@ -103,14 +96,13 @@ export default function GlossaryPage() {
         )}
       </div>
 
-      {/* Quick Nav */}
       <div className="fixed right-6 top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-1 text-[10px] font-black text-zinc-700 uppercase">
-        {letters.map(letter => (
-          <button 
-            key={letter} 
+        {letters.map((letter) => (
+          <button
+            key={letter}
             className="hover:text-red-500 transition px-2 py-1"
             onClick={() => {
-               document.getElementById(grouped[letter][0].term.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
+              document.getElementById(grouped[letter][0].term.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
             {letter}

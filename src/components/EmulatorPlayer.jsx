@@ -2,38 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-
-const EMULATORJS_CORES = {
-  'SNES': { core: 'snes9x', extensions: ['.sfc', '.smc', '.zip'] },
-  'NES':  { core: 'fceumm', extensions: ['.nes', '.zip'] },
-  'GB':   { core: 'gambatte', extensions: ['.gb', '.zip'] },
-  'GBC':  { core: 'gambatte', extensions: ['.gbc', '.gb', '.zip'] },
-  'GBA':  { core: 'mgba', extensions: ['.gba', '.zip'] },
-  'N64':  { core: 'mupen64plus', extensions: ['.n64', '.z64', '.v64'] },
-  'PS1':  { core: 'pcsx_rearmed', extensions: ['.bin', '.cue', '.iso'] },
-  'Genesis': { core: 'genesis_plus_gx', extensions: ['.gen', '.md', '.zip'] },
-  'SMS':  { core: 'genesis_plus_gx', extensions: ['.sms', '.zip'] },
-  'GG':   { core: 'genesis_plus_gx', extensions: ['.gg', '.zip'] },
-  'PSP':  { core: 'ppsspp', extensions: ['.iso', '.cso', '.pbp'] },
-  'Atari2600': { core: 'stella', extensions: ['.a26', '.bin', '.zip'] },
-  'NeoGeo': { core: 'fbneo', extensions: ['.zip'] },
-  'MAME': { core: 'mame2003', extensions: ['.zip', '.chd'] },
-};
+import { EMULATOR_CORES } from "@/lib/constants";
 
 export default function EmulatorPlayer({ game, onClose }) {
   const containerRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
   const platformShortName = game.platforms?.short_name;
-  const coreInfo = EMULATORJS_CORES[platformShortName] || { core: 'unknown', extensions: [] };
-  
-  useEffect(() => {
-    // Bloquear scroll do body
-    document.body.style.overflow = "hidden";
-    
-    // Simulação de carregamento (em um cenário real, aqui carregaria o script do EmulatorJS)
-    const timer = setTimeout(() => setLoading(false), 2000);
+  const coreInfo = EMULATOR_CORES[platformShortName] || { core: 'unknown', extensions: [] };
 
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const timer = setTimeout(() => setLoading(false), 2000);
     return () => {
       document.body.style.overflow = "auto";
       clearTimeout(timer);
@@ -42,7 +22,7 @@ export default function EmulatorPlayer({ game, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm">
-      <button 
+      <button
         onClick={onClose}
         className="absolute top-6 right-6 text-white hover:text-red-500 transition-colors z-[110]"
       >
@@ -59,7 +39,7 @@ export default function EmulatorPlayer({ game, onClose }) {
           <div className="flex h-full flex-col items-center justify-center p-12 text-center">
             <h2 className="text-3xl font-bold mb-4">Emulator Engine Ready</h2>
             <p className="text-zinc-500 max-w-md mb-8">
-              O núcleo do {game.platforms?.name} ({coreInfo.core}) foi carregado. 
+              O núcleo do {game.platforms?.name} ({coreInfo.core}) foi carregado.
               Para rodar <strong>{game.title}</strong> legalmente, um arquivo com extensões {coreInfo.extensions.join(", ")} deve ser mapeado no sistema.
             </p>
             <div className="grid grid-cols-2 gap-4 text-xs font-mono text-zinc-600">

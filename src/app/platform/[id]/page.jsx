@@ -1,20 +1,10 @@
-// src/app/platform/[id]/page.jsx
-import { supabase } from "@/lib/supabase/client";
-import GameCard from "@/components/game-card/GameCard";
-import PlatformBadge from "@/components/platform-badge/PlatformBadge";
-import { notFound } from "next/navigation";
-
-async function getPlatform(id) {
-  const { data } = await supabase
-    .from("platforms")
-    .select("*, games(*)")
-    .eq("id", id)
-    .single();
-  return data;
-}
+import { getPlatformById } from '@/services/platform.service';
+import GameCard from '@/components/game-card/GameCard';
+import PlatformBadge from '@/components/platform-badge/PlatformBadge';
+import { notFound } from 'next/navigation';
 
 export default async function PlatformPage({ params }) {
-  const platform = await getPlatform(params.id);
+  const platform = await getPlatformById(params.id);
   if (!platform) notFound();
 
   return (

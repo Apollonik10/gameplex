@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabase } from "@/lib/supabase/client";
 import CarouselSkeleton from "@/components/skeleton/CarouselSkeleton";
 import HeroBanner from "@/components/hero-banner/HeroBanner";
 import Carousel from "@/components/carousel/Carousel";
@@ -13,50 +13,65 @@ import { useDebounce } from "@/hooks/useDebounce";
 function HomeContent() {
   const [data, setData] = useState({ featuredGame: null, platforms: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { searchQuery } = useGameStore();
-  
-  // ✅ NOVO: debounce de 300ms no search
   const debouncedQuery = useDebounce(searchQuery, 300);
 
-  // ✅ NOVO: filtros por URL
   const searchParams = useSearchParams();
   const genreFilter = searchParams.get("genre");
   const platformFilter = searchParams.get("platform");
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchData() {
       setLoading(true);
+      setError(null);
       try {
-        const { data: featured } = await supabase
+        const client = getSupabase();
+        if (!client) {
+          setError("Supabase não configurado");
+          setLoading(false);
+          return;
+        }
+
+        const { data: featured } = await client
           .from("games")
           .select("*")
           .limit(1)
           .single();
 
-        let query = supabase.from("platforms").select(`id, name, games (*)`);
+        let query = client.from("platforms").select("id, name, games(*)");
         if (platformFilter) {
-          query = supabase
+          query = client
             .from("platforms")
-            .select(`id, name, games (*)`)
+            .select("id, name, games(*)")
             .eq("short_name", platformFilter);
         }
 
         const { data: plats } = await query;
-        setData({ featuredGame: featured, platforms: plats || [] });
+        if (!cancelled) {
+          setData({ featuredGame: featured, platforms: plats || [] });
+        }
+      } catch (e) {
+        if (!cancelled) {
+          console.error("Erro ao carregar dados:", e);
+          setError(e.message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
     fetchData();
+
+    return () => { cancelled = true; };
   }, [platformFilter]);
 
-  // ✅ Compute filteredGames during render to avoid cascading renders
   const filteredGames = (() => {
     if (debouncedQuery.trim() === "") return [];
-
     let allGames = data.platforms.flatMap((p) => p.games);
-
-    // ✅ NOVO: filtro por gênero
     if (genreFilter) {
       allGames = allGames.filter((g) =>
         g.genre?.some((genre) =>
@@ -64,7 +79,6 @@ function HomeContent() {
         )
       );
     }
-
     return allGames.filter((g) =>
       g.title.toLowerCase().includes(debouncedQuery.toLowerCase())
     );
@@ -80,6 +94,23 @@ function HomeContent() {
     );
   }
 
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Erro ao carregar dados</p>
+          <p className="text-zinc-500 text-sm">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 rounded bg-red-600 px-6 py-2 text-white hover:bg-red-700 transition"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-screen flex-col bg-zinc-950 pb-20 overflow-x-hidden">
       {debouncedQuery.trim() === "" ? (
@@ -87,10 +118,10 @@ function HomeContent() {
           <HeroBanner game={data.featuredGame} />
           <section className="mt-[-100px] relative z-20">
             {data.platforms.map((platform) => (
-              <Carousel 
-                key={platform.id} 
-                title={platform.name} 
-                games={platform.games} 
+              <Carousel
+                key={platform.id}
+                title={platform.name}
+                games={platform.games}
               />
             ))}
           </section>
@@ -116,7 +147,13 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={
+      <main className="flex min-h-screen flex-col bg-zinc-950 pb-20 pt-32">
+        <CarouselSkeleton />
+        <CarouselSkeleton />
+        <CarouselSkeleton />
+      </main>
+    }>
       <HomeContent />
     </Suspense>
   );

@@ -1,12 +1,12 @@
-import { enrichAllGames } from "../src/lib/enrichment.js";
+import { enrichAllGames } from '../src/services/enrichment.service.js';
 
 async function run() {
-  console.log("🚀 Iniciando enriquecimento de dados via APIs...");
+  console.log("Iniciando enriquecimento de dados via APIs...");
   try {
     const results = await enrichAllGames();
-    console.log(`✅ Sucesso! Processados ${results.length} jogos.`);
+    console.log(`Sucesso! Processados ${results.length} jogos.`);
   } catch (error) {
-    console.error("❌ Erro durante o enriquecimento:", error);
+    console.error("Erro durante o enriquecimento:", error);
   }
 }
 

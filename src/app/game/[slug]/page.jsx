@@ -1,54 +1,25 @@
-import { supabase } from "@/lib/supabase/client";
-import GameDetailsContent from "./GameDetailsContent";
-import { enrichGame } from "@/lib/enrichment";
+import { getGameBySlug } from '@/services/game.service';
+import { getGlossaryTerms } from '@/services/glossary.service';
+import { enrichGame } from '@/services/enrichment.service';
+import GameDetailsContent from './GameDetailsContent';
 
 async function getGameDetails(slug) {
-  const { data, error } = await supabase
-    .from("games")
-    .select(`
-      *,
-      platforms (*),
-      game_videos (*),
-      game_screenshots (*)
-    `)
-    .eq("slug", slug)
-    .single();
+  const game = await getGameBySlug(slug);
+  if (!game) return null;
 
-  if (error) return null;
-
-  // Se o jogo não tem screenshots ou vídeos, tenta enriquecer on-demand
-  if (!data.game_screenshots?.length || !data.game_videos?.length) {
-    console.log(`Enriquecendo ${data.title} on-demand...`);
-    await enrichGame(data.id);
-    
-    // Busca novamente para pegar os dados novos
-    const { data: updatedData } = await supabase
-      .from("games")
-      .select(`
-        *,
-        platforms (*),
-        game_videos (*),
-        game_screenshots (*)
-      `)
-      .eq("id", data.id)
-      .single();
-    
-    return updatedData || data;
+  if (!game.game_screenshots?.length || !game.game_videos?.length) {
+    await enrichGame(game.id);
+    return getGameBySlug(slug);
   }
 
-  return data;
-}
-
-async function getGlossary() {
-  const { data } = await supabase.from("glossary").select("*");
-  return data || [];
+  return game;
 }
 
 export default async function GamePage({ params }) {
   const { slug } = params;
   const [game, glossary] = await Promise.all([
     getGameDetails(slug),
-    getGlossary()
+    getGlossaryTerms(),
   ]);
 
   if (!game) {

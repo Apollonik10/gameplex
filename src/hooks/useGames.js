@@ -1,53 +1,26 @@
-// src/hooks/useGames.js
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase/client';
+import { getGameBySlug, getGamesByPlatform, getAllPlatforms } from '@/services/game.service';
+import { QUERY_KEYS, STALE_TIMES } from '@/lib/constants';
 
 export function useGames(platformShortName = null) {
   return useQuery({
-    queryKey: ['games', platformShortName],
-    queryFn: async () => {
-      let query = supabase
-        .from('games')
-        .select('*, platforms(name, short_name, brand_color)');
-
-      if (platformShortName) {
-        query = query.eq('platforms.short_name', platformShortName);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    queryKey: [QUERY_KEYS.GAMES, platformShortName],
+    queryFn: () => getGamesByPlatform(platformShortName),
+    staleTime: STALE_TIMES.GAMES,
   });
 }
 
 export function useGame(slug) {
   return useQuery({
-    queryKey: ['game', slug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('games')
-        .select('*, platforms(*), game_videos(*), game_screenshots(*)')
-        .eq('slug', slug)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryKey: [QUERY_KEYS.GAME, slug],
+    queryFn: () => getGameBySlug(slug),
   });
 }
 
 export function usePlatforms() {
   return useQuery({
-    queryKey: ['platforms'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('platforms')
-        .select('*, games(*)')
-        .order('name');
-      if (error) throw error;
-      return data;
-    },
-    staleTime: 1000 * 60 * 10,
+    queryKey: [QUERY_KEYS.PLATFORMS],
+    queryFn: getAllPlatforms,
+    staleTime: STALE_TIMES.PLATFORMS,
   });
 }

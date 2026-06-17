@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Play, Heart, Share2, ArrowLeft, Camera, MonitorPlay } from "lucide-react";
 import Link from "next/link";
@@ -9,20 +9,16 @@ import PlatformBadge from "@/components/platform-badge/PlatformBadge";
 import YouTubePlayer from "@/components/youtube-player/YouTubePlayer";
 import GlossaryTooltip from "@/components/glossary-tooltip/GlossaryTooltip";
 import { useFavorites } from "@/hooks/useFavorites";
-import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { EMULATOR_CORES } from "@/lib/constants";
 
 export default function GameDetailsContent({ game, glossary = [] }) {
   const [showEmulator, setShowEmulator] = useState(false);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-  }, []);
-
+  const { user } = useAuth();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites(user?.id);
-  const isSNES = game.platforms?.short_name === "SNES";
+
+  const platformName = game.platforms?.short_name;
+  const coreInfo = EMULATOR_CORES[platformName];
   const favorite = isFavorite(game.id);
 
   const toggleFavorite = () => {
@@ -37,31 +33,26 @@ export default function GameDetailsContent({ game, glossary = [] }) {
     }
   };
 
-  // Helper to inject glossary tooltips
   const renderDescription = (text) => {
     if (!text || !glossary.length) return text;
 
     let parts = [text];
-    
-    glossary.forEach(item => {
+
+    glossary.forEach((item) => {
       const newParts = [];
       const regex = new RegExp(`\\b(${item.term})\\b`, 'gi');
-      
-      parts.forEach(part => {
+
+      parts.forEach((part) => {
         if (typeof part !== 'string') {
           newParts.push(part);
           return;
         }
-        
+
         const split = part.split(regex);
         split.forEach((subPart, i) => {
           if (subPart.toLowerCase() === item.term.toLowerCase()) {
             newParts.push(
-              <GlossaryTooltip 
-                key={`${item.term}-${i}`} 
-                term={subPart} 
-                definition={item.definition} 
-              />
+              <GlossaryTooltip key={`${item.term}-${i}`} term={subPart} definition={item.definition} />
             );
           } else if (subPart) {
             newParts.push(subPart);
@@ -70,7 +61,7 @@ export default function GameDetailsContent({ game, glossary = [] }) {
       });
       parts = newParts;
     });
-    
+
     return parts;
   };
 
@@ -91,18 +82,18 @@ export default function GameDetailsContent({ game, glossary = [] }) {
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
-        
+
         <div className="relative z-10 flex h-full flex-col justify-end px-6 pb-12 md:px-16">
           <Link href="/" className="mb-6 flex items-center gap-2 text-zinc-400 hover:text-white transition w-fit">
             <ArrowLeft size={20} />
             <span>Voltar</span>
           </Link>
-          
+
           <div className="flex flex-col md:flex-row md:items-end gap-8">
             <div className="relative h-72 w-48 shrink-0 overflow-hidden rounded-lg shadow-2xl border border-zinc-800">
               <Image src={game.cover_url} alt={game.title} fill className="object-cover" />
             </div>
-            
+
             <div className="flex flex-col">
               <div className="mb-2 flex items-center gap-3">
                 <PlatformBadge platform={game.platforms} />
@@ -113,7 +104,7 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               <h1 className="mb-4 text-4xl font-bold md:text-7xl uppercase tracking-tighter italic">
                 {game.title}
               </h1>
-              
+
               <div className="flex items-center gap-4 mb-8">
                 <span className="text-green-500 font-bold text-lg">{game.year}</span>
                 <span className="border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-400 uppercase tracking-widest font-black">Original</span>
@@ -122,8 +113,8 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               </div>
 
               <div className="flex flex-wrap gap-4">
-                {isSNES && (
-                  <button 
+                {coreInfo && (
+                  <button
                     onClick={() => setShowEmulator(true)}
                     className="flex items-center gap-3 rounded bg-red-600 px-10 py-4 font-black hover:bg-red-700 transition uppercase tracking-widest shadow-lg shadow-red-600/30"
                   >
@@ -131,11 +122,11 @@ export default function GameDetailsContent({ game, glossary = [] }) {
                     Jogar Agora
                   </button>
                 )}
-                <button 
+                <button
                   onClick={toggleFavorite}
                   className={`flex items-center gap-2 rounded px-8 py-4 font-bold transition border ${
-                    favorite 
-                      ? "bg-red-600 border-red-600 text-white" 
+                    favorite
+                      ? "bg-red-600 border-red-600 text-white"
                       : "bg-zinc-800/80 backdrop-blur-sm border-zinc-700 hover:bg-zinc-700 text-white"
                   }`}
                 >
@@ -153,11 +144,7 @@ export default function GameDetailsContent({ game, glossary = [] }) {
 
       {/* Main Content Grid */}
       <div className="px-6 py-12 md:px-16 grid grid-cols-1 lg:grid-cols-12 gap-16">
-        
-        {/* Left Column: Info & Media */}
         <div className="lg:col-span-8 space-y-16">
-          
-          {/* Description */}
           <section>
             <h2 className="text-sm font-black uppercase tracking-[0.3em] text-zinc-600 mb-6 flex items-center gap-3">
               <span className="h-px w-8 bg-zinc-800" />
@@ -168,22 +155,20 @@ export default function GameDetailsContent({ game, glossary = [] }) {
             </div>
           </section>
 
-          {/* Video Section */}
           {video && (
             <section>
               <h2 className="text-sm font-black uppercase tracking-[0.3em] text-zinc-600 mb-6 flex items-center gap-3">
                 <MonitorPlay size={18} className="text-zinc-700" />
                 Trailer & Gameplay
               </h2>
-              <YouTubePlayer 
-                videoId={video.youtube_id} 
+              <YouTubePlayer
+                videoId={video.youtube_id}
                 title={video.title}
                 thumbnail={`https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`}
               />
             </section>
           )}
 
-          {/* Screenshots Gallery */}
           {screenshots.length > 0 && (
             <section>
               <h2 className="text-sm font-black uppercase tracking-[0.3em] text-zinc-600 mb-6 flex items-center gap-3">
@@ -193,10 +178,10 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x">
                 {screenshots.map((screen, idx) => (
                   <div key={idx} className="relative aspect-video h-48 shrink-0 overflow-hidden rounded-xl border border-zinc-800 snap-start group">
-                    <Image 
-                      src={screen.url} 
-                      alt={`${game.title} screenshot ${idx + 1}`} 
-                      fill 
+                    <Image
+                      src={screen.url}
+                      alt={`${game.title} screenshot ${idx + 1}`}
+                      fill
                       className="object-cover transition duration-500 group-hover:scale-110"
                     />
                   </div>
@@ -206,9 +191,7 @@ export default function GameDetailsContent({ game, glossary = [] }) {
           )}
         </div>
 
-        {/* Right Column: Specs & Credits */}
         <div className="lg:col-span-4 space-y-12">
-          
           <section>
             <h2 className="text-sm font-black uppercase tracking-[0.3em] text-zinc-600 mb-8">Hardware & Specs</h2>
             <div className="grid grid-cols-1 gap-4">

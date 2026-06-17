@@ -1,9 +1,9 @@
-// src/app/my-list/page.jsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { getUserList } from "@/services/favorite.service";
 import GameCard from "@/components/game-card/GameCard";
+import { useAuth } from "@/hooks/useAuth";
 import { Heart, Gamepad2, Star } from "lucide-react";
 import Link from "next/link";
 
@@ -16,27 +16,11 @@ const TABS = [
 export default function MyListPage() {
   const [activeTab, setActiveTab] = useState("favorites");
   const [games, setGames] = useState([]);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data?.user || null);
-      setLoading(false);
-    });
-  }, []);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     if (!user) return;
-    async function fetchList() {
-      const { data } = await supabase
-        .from("user_lists")
-        .select("*, games(*)")
-        .eq("user_id", user.id)
-        .eq("list_type", activeTab);
-      setGames(data?.map((d) => d.games) || []);
-    }
-    fetchList();
+    getUserList(user.id, activeTab).then(setGames);
   }, [user, activeTab]);
 
   if (loading) return (

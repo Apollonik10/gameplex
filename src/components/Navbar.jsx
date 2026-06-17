@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Search, Bell, User, Menu, LogOut } from "lucide-react";
 import { useGameStore } from "@/store/useGameStore";
-import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { getSupabase } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
 import { clsx } from "clsx";
@@ -15,32 +16,18 @@ function cn(...inputs) {
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const { searchQuery, setSearchQuery } = useGameStore();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 0);
     window.addEventListener("scroll", handleScroll);
-
-    // Check user auth status
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      subscription.unsubscribe();
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    const client = getSupabase();
+    if (client) await client.auth.signOut();
   };
 
   return (
@@ -54,7 +41,6 @@ export default function Navbar() {
         <Link href="/" className="text-2xl font-bold tracking-tighter text-red-600">
           GAMEPLEX
         </Link>
-        
         <div className="hidden gap-5 text-sm font-medium text-zinc-300 md:flex">
           <Link href="/" className="hover:text-white transition">Início</Link>
           <Link href="/my-list" className="hover:text-white transition">Minha Lista</Link>
@@ -73,19 +59,14 @@ export default function Navbar() {
             className="rounded bg-zinc-900/50 border border-zinc-700 py-1.5 pl-10 pr-4 text-sm outline-none focus:border-zinc-500 focus:bg-zinc-900 transition-all w-64"
           />
         </div>
-        
+
         <Bell className="cursor-pointer hover:text-zinc-400 transition" size={20} />
-        
+
         {user ? (
           <div className="group relative flex items-center gap-2">
             <div className="h-8 w-8 overflow-hidden rounded bg-zinc-800 cursor-pointer relative">
-              {user.user_metadata.avatar_url ? (
-                <Image 
-                  src={user.user_metadata.avatar_url} 
-                  alt="Avatar" 
-                  fill 
-                  className="object-cover" 
-                />
+              {user.user_metadata?.avatar_url ? (
+                <Image src={user.user_metadata.avatar_url} alt="Avatar" fill className="object-cover" />
               ) : (
                 <User className="h-full w-full p-1" />
               )}
@@ -94,7 +75,7 @@ export default function Navbar() {
               <p className="px-3 py-2 text-xs text-zinc-400 border-b border-zinc-800 mb-2 truncate">
                 {user.email}
               </p>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-white hover:bg-zinc-900 rounded"
               >
@@ -104,8 +85,8 @@ export default function Navbar() {
             </div>
           </div>
         ) : (
-          <Link 
-            href="/auth" 
+          <Link
+            href="/auth"
             className="rounded bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-red-700"
           >
             Entrar
