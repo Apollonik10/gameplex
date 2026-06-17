@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import Providers from "@/components/Providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,12 +37,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-zinc-950`}>
-        <ErrorBoundary>
-          <Navbar />
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </ErrorBoundary>
+        <Providers>
+          <ErrorBoundary>
+            <Navbar />
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </ErrorBoundary>
+        </Providers>
       </body>
     </html>
   );
