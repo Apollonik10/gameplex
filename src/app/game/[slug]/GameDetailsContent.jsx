@@ -164,7 +164,6 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               <YouTubePlayer
                 videoId={video.youtube_id}
                 title={video.title}
-                thumbnail={`https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`}
               />
             </section>
           )}
@@ -193,14 +192,17 @@ export default function GameDetailsContent({ game, glossary = [] }) {
 
         <div className="lg:col-span-4 space-y-12">
           <section>
-            <h2 className="text-sm font-black uppercase tracking-[0.3em] text-zinc-600 mb-8">Hardware & Specs</h2>
-            <div className="grid grid-cols-1 gap-4">
-              {game.technical_specs && Object.entries(game.technical_specs).map(([key, value]) => (
-                <div key={key} className="bg-zinc-900/30 p-5 rounded-xl border border-zinc-800/50 hover:bg-zinc-900/50 transition">
-                  <span className="block text-[10px] uppercase text-red-500/70 font-black tracking-[0.2em] mb-2">{key}</span>
-                  <span className="text-zinc-200 font-medium text-lg">{value}</span>
-                </div>
-              ))}
+            <h2 className="text-sm font-black uppercase tracking-[0.3em] text-zinc-600 mb-8">Especificações</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {game.technical_specs && Object.entries(game.technical_specs)
+                .filter(([, v]) => typeof v !== "boolean")
+                .slice(0, 8)
+                .map(([key, value]) => (
+                  <div key={key} className="bg-zinc-900/30 p-3 rounded-lg border border-zinc-800/50">
+                    <span className="block text-[9px] uppercase text-zinc-600 font-bold tracking-wider mb-1">{key.replace(/_/g, " ")}</span>
+                    <span className="text-zinc-300 font-medium text-sm">{String(value)}</span>
+                  </div>
+                ))}
             </div>
           </section>
 
@@ -218,19 +220,6 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               <span className="text-zinc-300 font-bold">{game.year}</span>
             </div>
           </section>
-
-          <div className="p-8 bg-gradient-to-br from-zinc-900 to-zinc-950 rounded-3xl border border-zinc-800 shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
-              <Play size={80} fill="currentColor" className="text-red-600" />
-            </div>
-            <h3 className="font-black mb-4 text-red-500 flex items-center gap-2 uppercase text-[10px] tracking-[0.3em]">
-              <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              Legacy Note
-            </h3>
-            <p className="text-sm text-zinc-400 leading-relaxed italic relative z-10">
-              &quot;Este título definiu o padrão ouro para {game.platforms?.name}. Cada pixel e cada trilha sonora foram projetados para empurrar o hardware ao seu limite absoluto.&quot;
-            </p>
-          </div>
         </div>
       </div>
     </main>
