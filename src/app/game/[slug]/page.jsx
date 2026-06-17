@@ -16,7 +16,7 @@ async function getGameDetails(slug) {
 }
 
 export default async function GamePage({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
   const [game, glossary] = await Promise.all([
     getGameDetails(slug),
     getGlossaryTerms(),

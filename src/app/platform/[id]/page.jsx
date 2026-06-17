@@ -4,7 +4,8 @@ import PlatformBadge from '@/components/platform-badge/PlatformBadge';
 import { notFound } from 'next/navigation';
 
 export default async function PlatformPage({ params }) {
-  const platform = await getPlatformById(params.id);
+  const { id } = await params;
+  const platform = await getPlatformById(id);
   if (!platform) notFound();
 
   return (
