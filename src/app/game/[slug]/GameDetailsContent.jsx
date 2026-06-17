@@ -1,24 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
-import { Play, Heart, Share2, ArrowLeft, Camera, MonitorPlay } from "lucide-react";
+import { Heart, Share2, ArrowLeft, Camera, MonitorPlay } from "lucide-react";
 import Link from "next/link";
-import EmulatorPlayer from "@/components/EmulatorPlayer";
 import PlatformBadge from "@/components/platform-badge/PlatformBadge";
 import YouTubePlayer from "@/components/youtube-player/YouTubePlayer";
 import GlossaryTooltip from "@/components/glossary-tooltip/GlossaryTooltip";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/hooks/useAuth";
-import { EMULATOR_CORES } from "@/lib/constants";
 
 export default function GameDetailsContent({ game, glossary = [] }) {
-  const [showEmulator, setShowEmulator] = useState(false);
   const { user } = useAuth();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites(user?.id);
-
-  const platformName = game.platforms?.short_name;
-  const coreInfo = EMULATOR_CORES[platformName];
   const favorite = isFavorite(game.id);
 
   const toggleFavorite = () => {
@@ -70,14 +63,13 @@ export default function GameDetailsContent({ game, glossary = [] }) {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white pb-20">
-      {showEmulator && <EmulatorPlayer game={game} onClose={() => setShowEmulator(false)} />}
-
       {/* Hero Section */}
       <div className="relative h-[70vh] w-full">
         <Image
           src={game.cover_url}
           alt={game.title}
           fill
+          sizes="100vw"
           className="object-cover opacity-40 blur-sm"
           priority
         />
@@ -91,7 +83,7 @@ export default function GameDetailsContent({ game, glossary = [] }) {
 
           <div className="flex flex-col md:flex-row md:items-end gap-8">
             <div className="relative h-72 w-48 shrink-0 overflow-hidden rounded-lg shadow-2xl border border-zinc-800">
-              <Image src={game.cover_url} alt={game.title} fill className="object-cover" />
+              <Image src={game.cover_url} alt={game.title} fill sizes="192px" className="object-cover" />
             </div>
 
             <div className="flex flex-col">
@@ -113,15 +105,6 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               </div>
 
               <div className="flex flex-wrap gap-4">
-                {coreInfo && (
-                  <button
-                    onClick={() => setShowEmulator(true)}
-                    className="flex items-center gap-3 rounded bg-red-600 px-10 py-4 font-black hover:bg-red-700 transition uppercase tracking-widest shadow-lg shadow-red-600/30"
-                  >
-                    <Play size={24} fill="currentColor" />
-                    Jogar Agora
-                  </button>
-                )}
                 <button
                   onClick={toggleFavorite}
                   className={`flex items-center gap-2 rounded px-8 py-4 font-bold transition border ${
@@ -181,6 +164,7 @@ export default function GameDetailsContent({ game, glossary = [] }) {
                       src={screen.url}
                       alt={`${game.title} screenshot ${idx + 1}`}
                       fill
+                      sizes="384px"
                       className="object-cover transition duration-500 group-hover:scale-110"
                     />
                   </div>
