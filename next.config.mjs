@@ -19,6 +19,16 @@ const withPWA = withPWAInit({
 const nextConfig = {
   reactStrictMode: true,
   turbopack: {},
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "images.igdb.com" },
+      { protocol: "https", hostname: "upload.wikimedia.org" },
+      { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: "img.youtube.com" },
+      { protocol: "https", hostname: "www.mobygames.com" },
+    ],
+    unoptimized: false,
+  },
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
