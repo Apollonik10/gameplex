@@ -112,6 +112,34 @@ npm run build
 
 ---
 
+## Launcher de Emuladores (novo)
+
+O Gameplex agora também **inicializa** os jogos, não só cataloga. Baseado no
+[EmulatorJS](https://emulatorjs.org) (frontend web para cores do RetroArch em WebAssembly,
+100% no navegador, sem backend de emulação).
+
+**Estratégia de armazenamento dupla:**
+- **ROMs pequenas** (SNES, NES, GB, GBC, GBA, Genesis, SMS, GG, Atari2600...) →
+  enviadas para um bucket privado no Supabase Storage, servidas via signed URL de curta duração.
+- **ROMs grandes** (PS1, PSP, Saturn, N64, NDS...) → ficam **só no dispositivo**.
+  O app guarda apenas o nome/tamanho do arquivo; na hora de jogar, você reseleciona a
+  pasta local (`<input type="file" webkitdirectory>`) e o app localiza o arquivo pelo nome.
+  Nada é enviado para a internet nesse fluxo.
+
+> PS2 não está disponível: o EmulatorJS ainda não tem um core WebAssembly pra esse sistema.
+
+**Setup necessário (uma vez):**
+1. Rodar `supabase_migration_roms.sql` no SQL Editor do Supabase Studio — cria a tabela
+   `roms` e o bucket `roms` no Storage, com RLS por usuário.
+2. Pronto — o botão "Cadastrar ROM" aparece na página de detalhe de qualquer jogo com
+   sistema suportado.
+
+**Arquivos novos:**
+- `src/services/rom.service.js` — upload/registro/signed URL de ROMs
+- `src/hooks/useLocalRom.js` — seletor de pasta local + matching por nome de arquivo
+- `src/components/EmulatorPlayer.jsx` — player real via EmulatorJS (antes era só uma simulação visual)
+- `src/lib/constants.js` — novo `EJS_SYSTEMS` (mapa plataforma → sistema EmulatorJS)
+
 ## Deploy
 
 Projeto configurado para deploy automático na Vercel via GitHub.

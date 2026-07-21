@@ -1,18 +1,88 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Heart, Share2, ArrowLeft, Camera, MonitorPlay } from "lucide-react";
+import { Heart, Share2, ArrowLeft, Camera, MonitorPlay, Gamepad2, UploadCloud, HardDrive, Loader2 } from "lucide-react";
 import Link from "next/link";
 import PlatformBadge from "@/components/platform-badge/PlatformBadge";
 import YouTubePlayer from "@/components/youtube-player/YouTubePlayer";
 import GlossaryTooltip from "@/components/glossary-tooltip/GlossaryTooltip";
+import EmulatorPlayer from "@/components/EmulatorPlayer";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/hooks/useAuth";
+import { getRomForGame, uploadCloudRom, registerLocalRom } from "@/services/rom.service";
+import { EJS_SYSTEMS } from "@/lib/constants";
 
 export default function GameDetailsContent({ game, glossary = [] }) {
   const { user } = useAuth();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites(user?.id);
   const favorite = isFavorite(game.id);
+
+  const [rom, setRom] = useState(null);
+  const [romLoading, setRomLoading] = useState(true);
+  const [showPlayer, setShowPlayer] = useState(false);
+  const [showAddRom, setShowAddRom] = useState(false);
+  const [savingRom, setSavingRom] = useState(false);
+  const [romError, setRomError] = useState(null);
+
+  const systemSupported = Boolean(EJS_SYSTEMS[game.platforms?.short_name]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getRomForGame(game.id).then((r) => {
+      if (!cancelled) {
+        setRom(r);
+        setRomLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [game.id]);
+
+  const handlePlayClick = () => {
+    if (!user) {
+      alert("Você precisa estar logado para jogar.");
+      return;
+    }
+    if (rom) {
+      setShowPlayer(true);
+    } else {
+      setShowAddRom(true);
+    }
+  };
+
+  const handleCloudUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSavingRom(true);
+    setRomError(null);
+    try {
+      const saved = await uploadCloudRom({ file, gameId: game.id, userId: user.id });
+      setRom(saved);
+      setShowAddRom(false);
+    } catch (err) {
+      setRomError(err.message || "Erro ao enviar a ROM.");
+    } finally {
+      setSavingRom(false);
+    }
+  };
+
+  const handleLocalRegister = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSavingRom(true);
+    setRomError(null);
+    try {
+      const saved = await registerLocalRom({ file, gameId: game.id, userId: user.id });
+      setRom(saved);
+      setShowAddRom(false);
+    } catch (err) {
+      setRomError(err.message || "Erro ao registrar a ROM.");
+    } finally {
+      setSavingRom(false);
+    }
+  };
 
   const toggleFavorite = () => {
     if (!user) {
@@ -105,6 +175,15 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               </div>
 
               <div className="flex flex-wrap gap-4">
+                {systemSupported && !romLoading && (
+                  <button
+                    onClick={handlePlayClick}
+                    className="flex items-center gap-2 rounded bg-white px-8 py-4 font-bold text-black transition hover:bg-zinc-200"
+                  >
+                    <Gamepad2 size={20} />
+                    {rom ? "Jogar" : "Cadastrar ROM"}
+                  </button>
+                )}
                 <button
                   onClick={toggleFavorite}
                   className={`flex items-center gap-2 rounded px-8 py-4 font-bold transition border ${
@@ -206,6 +285,55 @@ export default function GameDetailsContent({ game, glossary = [] }) {
           </section>
         </div>
       </div>
+
+      {showAddRom && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm px-6">
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+            <button
+              onClick={() => setShowAddRom(false)}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white transition"
+            >
+              ✕
+            </button>
+            <h2 className="text-xl font-bold mb-2">Cadastrar ROM</h2>
+            <p className="text-sm text-zinc-500 mb-6">
+              Consoles mais antigos cabem tranquilo na nuvem. Jogos grandes (PS1, PSP, Saturn...)
+              ficam só no seu dispositivo — você vai reselecionar a pasta toda vez que for jogar.
+            </p>
+
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 rounded-lg border border-zinc-800 p-4 cursor-pointer hover:border-red-600 transition">
+                <UploadCloud size={22} className="text-red-500 shrink-0" />
+                <span className="text-sm">
+                  <span className="block font-bold text-white">Enviar para a nuvem</span>
+                  <span className="text-zinc-500">Ideal para ROMs pequenas (SNES, NES, GB...)</span>
+                </span>
+                <input type="file" onChange={handleCloudUpload} className="hidden" disabled={savingRom} />
+              </label>
+
+              <label className="flex items-center gap-3 rounded-lg border border-zinc-800 p-4 cursor-pointer hover:border-red-600 transition">
+                <HardDrive size={22} className="text-zinc-400 shrink-0" />
+                <span className="text-sm">
+                  <span className="block font-bold text-white">Manter no dispositivo</span>
+                  <span className="text-zinc-500">Ideal para ROMs grandes (PS1, PSP, Saturn...)</span>
+                </span>
+                <input type="file" onChange={handleLocalRegister} className="hidden" disabled={savingRom} />
+              </label>
+            </div>
+
+            {savingRom && (
+              <p className="mt-4 flex items-center gap-2 text-sm text-zinc-400">
+                <Loader2 className="animate-spin" size={16} /> Salvando...
+              </p>
+            )}
+            {romError && <p className="mt-4 text-sm text-red-500">{romError}</p>}
+          </div>
+        </div>
+      )}
+
+      {showPlayer && rom && (
+        <EmulatorPlayer game={game} onClose={() => setShowPlayer(false)} />
+      )}
     </main>
   );
 }

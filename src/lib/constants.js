@@ -25,6 +25,33 @@ export const LIST_TYPES = {
   WISHLIST: 'wishlist',
 };
 
+// Mapeia o short_name da plataforma para o identificador de SISTEMA aceito por
+// EJS_core no EmulatorJS (https://emulatorjs.org/docs/systems/). Isso é diferente
+// do nome do core específico (ex: 'snes9x') — o EJS_core geralmente espera o
+// nome do sistema ('snes'), que internamente escolhe o core padrão.
+// PS2 não está na lista porque o EmulatorJS não tem core compatível até hoje.
+export const EJS_SYSTEMS = {
+  NES: { system: 'nes' },
+  SNES: { system: 'snes' },
+  GB: { system: 'gb' },
+  GBC: { system: 'gb' },
+  GBA: { system: 'gba' },
+  N64: { system: 'n64' },
+  NDS: { system: 'nds' },
+  Genesis: { system: 'segaMD' },
+  SMS: { system: 'segaMS' },
+  GG: { system: 'segaGG' },
+  '32X': { system: 'sega32x' },
+  Saturn: { system: 'segaSaturn' },
+  PS1: { system: 'psx' },
+  PSP: { system: 'psp', requiresThreads: true },
+  Atari2600: { system: 'atari2600' },
+  NeoGeo: { system: 'arcade' },
+  MAME: { system: 'mame' },
+};
+
+export const EMULATORJS_CDN = 'https://cdn.emulatorjs.org/stable/data/';
+
 export const EMULATOR_CORES = {
   SNES: { core: 'snes9x', extensions: ['.sfc', '.smc', '.zip'] },
   NES: { core: 'fceumm', extensions: ['.nes', '.zip'] },
