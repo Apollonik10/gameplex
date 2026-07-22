@@ -1,6 +1,7 @@
 import { getPlatformById } from '@/services/platform.service';
 import GameCard from '@/components/game-card/GameCard';
 import PlatformBadge from '@/components/platform-badge/PlatformBadge';
+import PlatformBiosUpload from '@/components/platform-bios/PlatformBiosUpload';
 import { notFound } from 'next/navigation';
 
 export default async function PlatformPage({ params }) {
@@ -26,6 +27,7 @@ export default async function PlatformPage({ params }) {
             ROMs: {platform.rom_extensions.join(" · ")}
           </p>
         )}
+        <PlatformBiosUpload platform={platform} />
       </header>
 
       <div className="flex flex-wrap gap-6">

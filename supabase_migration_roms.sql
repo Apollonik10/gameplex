@@ -1,6 +1,9 @@
 -- GAMEPLEX — Migration: Launcher de Emuladores (ROMs cloud + local)
--- Rodar no SQL Editor do Supabase Studio (a tentativa de aplicar via MCP
--- falhou por timeout de conexão no momento da geração deste arquivo).
+-- ✅ JÁ APLICADA no projeto Supabase (nznmpfuomfgzmunyhwjb) via MCP.
+-- Este arquivo fica só como referência/histórico — não precisa rodar de novo.
+-- (Causa do erro anterior: o projeto Supabase estava com status INACTIVE/pausado
+-- por inatividade no tier free; foi restaurado antes de aplicar esta migration.)
+
 
 -- 1) Tabela de ROMs -----------------------------------------------------
 create table if not exists roms (

@@ -129,6 +129,43 @@ export async function registerLocalRom({ file, gameId, userId }) {
   return data;
 }
 
+/**
+ * Faz upload de um arquivo de BIOS para uma plataforma. BIOS são sempre
+ * pequenos, então vão direto pra nuvem — sem opção "local" aqui.
+ */
+export async function uploadBios({ file, platformId, userId }) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase não configurado');
+  if (!userId) throw new Error('Usuário não autenticado');
+
+  const path = `${userId}/bios/${platformId}/${file.name}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(ROMS_BUCKET)
+    .upload(path, file, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  await supabase.from('roms').delete().eq('platform_id', platformId).eq('role', 'bios');
+
+  const { data, error } = await supabase
+    .from('roms')
+    .insert({
+      user_id: userId,
+      platform_id: platformId,
+      role: 'bios',
+      storage_type: 'cloud',
+      storage_path: path,
+      filename: file.name,
+      file_size: file.size,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function deleteRom(romId) {
   const supabase = getSupabase();
   if (!supabase) return;
