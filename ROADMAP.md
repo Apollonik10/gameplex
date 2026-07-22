@@ -1,5 +1,13 @@
 # GAMEPLEX — Roadmap
 
+## 📋 Regra de Sessão
+
+> **Ao iniciar uma sessão com IA (MiMo, Claude, etc.), o agente DEVE invocar o arquivo `AI_CONTEXT.md` do AI Workspace (`/data/data/com.termux/files/home/projects/ai-workspace/AI_CONTEXT.md`) antes de qualquer alteração no código.**
+>
+> Isso garante que todas as decisões sigam as diretrizes do projeto: Mobile First, Termux + Acode, código limpo, modular, performance, e explicar decisões antes de alterar código.
+
+---
+
 ## ✅ Concluído
 
 ### v1 — Catálogo Base
@@ -36,6 +44,9 @@
   - Barra de progresso, grid de badges, pontos por conquista
   - Link direto para retroachievements.org
 - [x] **Página de Auth atualizada** — removido texto de "Assine agora" / registro
+- [x] **`.env.local` configurado** — todas as chaves de API adicionadas (Supabase, RAWG, RetroAchievements)
+- [x] **API RetroAchievements testada** — conexão validada com sucesso (Super Mario Bros: 76 conquistas)
+- [x] **Migration SQL criada** — `supabase_migration_retroachievements.sql` pronta para executar
 
 ---
 
@@ -43,29 +54,27 @@
 
 ### ⚡ PRIORIDADE IMEDIATA — Ativar RetroAchievements
 
-> As conquistas já estão integradas no código. Faltam apenas:
+> As conquistas já estão integradas no código. Configuração parcialmente concluída:
 
-1. **Criar conta no RetroAchievements**
-   - Acesse [retroachievements.org](https://retroachievements.org) e crie uma conta gratuita
-   - Vá em `Settings` → copie a **Web API Key**
+1. ~~**Criar conta no RetroAchievements**~~ ✅
+   - Conta criada: `apollonik10`
 
-2. **Adicionar variáveis de ambiente**
-   - No `.env.local` (desenvolvimento local):
-     ```
-     NEXT_PUBLIC_RA_USERNAME=seu_username
-     NEXT_PUBLIC_RA_API_KEY=sua_api_key
-     ```
-   - Na **Vercel** (produção):
-     - Dashboard → Projeto gameplex → Settings → Environment Variables
-     - Adicionar `NEXT_PUBLIC_RA_USERNAME` e `NEXT_PUBLIC_RA_API_KEY`
+2. ~~**Adicionar variáveis de ambiente**~~ ✅
+   - `.env.local` configurado com todas as chaves
 
-3. **Adicionar `ra_game_id` nos jogos do Supabase**
-   - Execute no SQL Editor do Supabase:
+3. **Adicionar `ra_game_id` nos jogos do Supabase** ← **PRÓXIMO PASSO**
+   - Execute no SQL Editor do Supabase ([link direto](https://supabase.com/dashboard/project/nznmpfuomfgzmunyhwjb/sql/new)):
      ```sql
      ALTER TABLE games ADD COLUMN IF NOT EXISTS ra_game_id integer;
+     CREATE INDEX IF NOT EXISTS idx_games_ra_game_id ON games(ra_game_id);
+
+     UPDATE games SET ra_game_id = 7346 WHERE slug = 'super-mario-world';
+     UPDATE games SET ra_game_id = 1446 WHERE slug = 'super-mario-bros';
+     UPDATE games SET ra_game_id = 1 WHERE slug = 'sonic-the-hedgehog';
+     UPDATE games SET ra_game_id = 11240 WHERE slug = 'castlevania-symphony-of-the-night';
+     UPDATE games SET ra_game_id = 4748 WHERE slug = 'pokemon-red';
+     UPDATE games SET ra_game_id = 10087 WHERE slug = 'the-legend-of-zelda-ocarina-of-time';
      ```
-   - Para cada jogo, busque o ID em `https://retroachievements.org/game/<id>`
-     e atualize: `UPDATE games SET ra_game_id = 7346 WHERE slug = 'super-mario-world';`
    - Exemplos de IDs conhecidos:
      | Jogo | Platform | ra_game_id |
      |------|----------|-----------|

@@ -1,21 +1,16 @@
--- GAMEPLEX — Migration: Adiciona ra_game_id para integração com RetroAchievements
--- Execute no SQL Editor do Supabase Studio quando for ativar as conquistas.
---
--- O campo ra_game_id é o ID numérico do jogo em retroachievements.org
--- Exemplo: https://retroachievements.org/game/7346 → ra_game_id = 7346
---
--- É OPCIONAL — jogos sem ra_game_id simplesmente não exibem o painel de conquistas.
+-- GAMEPLEX — Migration: RetroAchievements
+-- Adiciona campo ra_game_id à tabela games para mapear jogos ao RetroAchievements
 
+-- 1) Adicionar coluna ra_game_id à tabela games
 ALTER TABLE games ADD COLUMN IF NOT EXISTS ra_game_id integer;
 
-COMMENT ON COLUMN games.ra_game_id IS 
-  'ID do jogo no RetroAchievements (https://retroachievements.org). '
-  'Opcional — quando preenchido, exibe o painel de conquistas na página do jogo.';
+-- 2) Criar índice para buscas por ra_game_id
+CREATE INDEX IF NOT EXISTS idx_games_ra_game_id ON games(ra_game_id);
 
--- Exemplos de IDs para preencher depois:
--- UPDATE games SET ra_game_id = 7346  WHERE slug ILIKE '%super-mario-world%';
--- UPDATE games SET ra_game_id = 1446  WHERE slug ILIKE '%super-mario-bros%';
--- UPDATE games SET ra_game_id = 1     WHERE slug ILIKE '%sonic-the-hedgehog%';
--- UPDATE games SET ra_game_id = 11240 WHERE slug ILIKE '%castlevania%symphony%';
--- UPDATE games SET ra_game_id = 4748  WHERE slug ILIKE '%pokemon-red%';
--- UPDATE games SET ra_game_id = 10087 WHERE slug ILIKE '%ocarina%';
+-- 3) Exemplos de atualização de jogos (descomente e ajuste conforme necessário):
+-- UPDATE games SET ra_game_id = 7346 WHERE slug = 'super-mario-world';
+-- UPDATE games SET ra_game_id = 1446 WHERE slug = 'super-mario-bros';
+-- UPDATE games SET ra_game_id = 1 WHERE slug = 'sonic-the-hedgehog';
+-- UPDATE games SET ra_game_id = 11240 WHERE slug = 'castlevania-symphony-of-the-night';
+-- UPDATE games SET ra_game_id = 4748 WHERE slug = 'pokemon-red';
+-- UPDATE games SET ra_game_id = 10087 WHERE slug = 'the-legend-of-zelda-ocarina-of-time';
