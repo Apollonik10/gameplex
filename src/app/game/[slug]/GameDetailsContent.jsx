@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Heart, Share2, ArrowLeft, Camera, MonitorPlay, Gamepad2, UploadCloud, HardDrive, Loader2 } from "lucide-react";
+import { Heart, Share2, ArrowLeft, Camera, MonitorPlay, Gamepad2, Play } from "lucide-react";
 import Link from "next/link";
 import PlatformBadge from "@/components/platform-badge/PlatformBadge";
 import YouTubePlayer from "@/components/youtube-player/YouTubePlayer";
 import GlossaryTooltip from "@/components/glossary-tooltip/GlossaryTooltip";
 import EmulatorPlayer from "@/components/EmulatorPlayer";
+import AchievementsPanel from "@/components/achievements/AchievementsPanel";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/hooks/useAuth";
-import { getRomForGame, uploadCloudRom, registerLocalRom } from "@/services/rom.service";
 import { EJS_SYSTEMS } from "@/lib/constants";
 
 export default function GameDetailsContent({ game, glossary = [] }) {
@@ -18,70 +18,24 @@ export default function GameDetailsContent({ game, glossary = [] }) {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites(user?.id);
   const favorite = isFavorite(game.id);
 
-  const [rom, setRom] = useState(null);
-  const [romLoading, setRomLoading] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
-  const [showAddRom, setShowAddRom] = useState(false);
-  const [savingRom, setSavingRom] = useState(false);
-  const [romError, setRomError] = useState(null);
+  const [romFile, setRomFile] = useState(null); // arquivo selecionado localmente
 
   const systemSupported = Boolean(EJS_SYSTEMS[game.platforms?.short_name]);
 
-  useEffect(() => {
-    let cancelled = false;
-    getRomForGame(game.id).then((r) => {
-      if (!cancelled) {
-        setRom(r);
-        setRomLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [game.id]);
-
+  // Ao clicar em "Jogar", abre seletor de arquivo local direto
   const handlePlayClick = () => {
-    if (!user) {
-      alert("Você precisa estar logado para jogar.");
-      return;
-    }
-    if (rom) {
-      setShowPlayer(true);
-    } else {
-      setShowAddRom(true);
-    }
-  };
-
-  const handleCloudUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSavingRom(true);
-    setRomError(null);
-    try {
-      const saved = await uploadCloudRom({ file, gameId: game.id, userId: user.id });
-      setRom(saved);
-      setShowAddRom(false);
-    } catch (err) {
-      setRomError(err.message || "Erro ao enviar a ROM.");
-    } finally {
-      setSavingRom(false);
-    }
-  };
-
-  const handleLocalRegister = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSavingRom(true);
-    setRomError(null);
-    try {
-      const saved = await registerLocalRom({ file, gameId: game.id, userId: user.id });
-      setRom(saved);
-      setShowAddRom(false);
-    } catch (err) {
-      setRomError(err.message || "Erro ao registrar a ROM.");
-    } finally {
-      setSavingRom(false);
-    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".zip,.sfc,.smc,.nes,.gb,.gbc,.gba,.n64,.z64,.v64,.nds,.gen,.md,.sms,.gg,.iso,.cso,.pbp,.bin,.cue,.a26,.rom";
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setRomFile(file);
+        setShowPlayer(true);
+      }
+    };
+    input.click();
   };
 
   const toggleFavorite = () => {
@@ -103,10 +57,10 @@ export default function GameDetailsContent({ game, glossary = [] }) {
 
     glossary.forEach((item) => {
       const newParts = [];
-      const regex = new RegExp(`\\b(${item.term})\\b`, 'gi');
+      const regex = new RegExp(`\\b(${item.term})\\b`, "gi");
 
       parts.forEach((part) => {
-        if (typeof part !== 'string') {
+        if (typeof part !== "string") {
           newParts.push(part);
           return;
         }
@@ -115,7 +69,11 @@ export default function GameDetailsContent({ game, glossary = [] }) {
         split.forEach((subPart, i) => {
           if (subPart.toLowerCase() === item.term.toLowerCase()) {
             newParts.push(
-              <GlossaryTooltip key={`${item.term}-${i}`} term={subPart} definition={item.definition} />
+              <GlossaryTooltip
+                key={`${item.term}-${i}`}
+                term={subPart}
+                definition={item.definition}
+              />
             );
           } else if (subPart) {
             newParts.push(subPart);
@@ -130,6 +88,8 @@ export default function GameDetailsContent({ game, glossary = [] }) {
 
   const video = game.game_videos?.[0];
   const screenshots = game.game_screenshots || [];
+  // ra_game_id é o campo opcional na tabela games que mapeia ao RetroAchievements
+  const raGameId = game.ra_game_id || null;
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white pb-20">
@@ -146,14 +106,23 @@ export default function GameDetailsContent({ game, glossary = [] }) {
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
 
         <div className="relative z-10 flex h-full flex-col justify-end px-6 pb-12 md:px-16">
-          <Link href="/" className="mb-6 flex items-center gap-2 text-zinc-400 hover:text-white transition w-fit">
+          <Link
+            href="/"
+            className="mb-6 flex items-center gap-2 text-zinc-400 hover:text-white transition w-fit"
+          >
             <ArrowLeft size={20} />
             <span>Voltar</span>
           </Link>
 
           <div className="flex flex-col md:flex-row md:items-end gap-8">
             <div className="relative h-72 w-48 shrink-0 overflow-hidden rounded-lg shadow-2xl border border-zinc-800">
-              <Image src={game.cover_url} alt={game.title} fill sizes="192px" className="object-cover" />
+              <Image
+                src={game.cover_url}
+                alt={game.title}
+                fill
+                sizes="192px"
+                className="object-cover"
+              />
             </div>
 
             <div className="flex flex-col">
@@ -169,21 +138,27 @@ export default function GameDetailsContent({ game, glossary = [] }) {
 
               <div className="flex items-center gap-4 mb-8">
                 <span className="text-green-500 font-bold text-lg">{game.year}</span>
-                <span className="border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-400 uppercase tracking-widest font-black">Original</span>
+                <span className="border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-400 uppercase tracking-widest font-black">
+                  Original
+                </span>
                 <div className="h-1 w-1 rounded-full bg-zinc-700" />
-                <span className="text-zinc-300 font-medium">{game.genre?.join(", ")}</span>
+                <span className="text-zinc-300 font-medium">
+                  {game.genre?.join(", ")}
+                </span>
               </div>
 
               <div className="flex flex-wrap gap-4">
-                {systemSupported && !romLoading && (
+                {/* Botão Jogar — sempre visível se sistema suportado, sem obrigação de login */}
+                {systemSupported && (
                   <button
                     onClick={handlePlayClick}
                     className="flex items-center gap-2 rounded bg-white px-8 py-4 font-bold text-black transition hover:bg-zinc-200"
                   >
-                    <Gamepad2 size={20} />
-                    {rom ? "Jogar" : "Cadastrar ROM"}
+                    <Play size={20} fill="currentColor" />
+                    Jogar
                   </button>
                 )}
+
                 <button
                   onClick={toggleFavorite}
                   className={`flex items-center gap-2 rounded px-8 py-4 font-bold transition border ${
@@ -195,10 +170,19 @@ export default function GameDetailsContent({ game, glossary = [] }) {
                   <Heart size={20} fill={favorite ? "currentColor" : "none"} />
                   {favorite ? "Na Minha Lista" : "Minha Lista"}
                 </button>
+
                 <button className="flex items-center justify-center rounded-full bg-zinc-800/80 backdrop-blur-sm p-4 hover:bg-zinc-700 transition border border-zinc-700">
                   <Share2 size={20} />
                 </button>
               </div>
+
+              {/* Aviso de sistema não suportado no browser */}
+              {!systemSupported && (
+                <p className="mt-4 text-xs text-zinc-600 italic">
+                  Emulação em navegador não disponível para{" "}
+                  {game.platforms?.short_name || "esta plataforma"} ainda.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -223,10 +207,7 @@ export default function GameDetailsContent({ game, glossary = [] }) {
                 <MonitorPlay size={18} className="text-zinc-700" />
                 Trailer & Gameplay
               </h2>
-              <YouTubePlayer
-                videoId={video.youtube_id}
-                title={video.title}
-              />
+              <YouTubePlayer videoId={video.youtube_id} title={video.title} />
             </section>
           )}
 
@@ -238,7 +219,10 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               </h2>
               <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x">
                 {screenshots.map((screen, idx) => (
-                  <div key={idx} className="relative aspect-video h-48 shrink-0 overflow-hidden rounded-xl border border-zinc-800 snap-start group">
+                  <div
+                    key={idx}
+                    className="relative aspect-video h-48 shrink-0 overflow-hidden rounded-xl border border-zinc-800 snap-start group"
+                  >
                     <Image
                       src={screen.url}
                       alt={`${game.title} screenshot ${idx + 1}`}
@@ -251,88 +235,85 @@ export default function GameDetailsContent({ game, glossary = [] }) {
               </div>
             </section>
           )}
+
+          {/* Conquistas do RetroAchievements */}
+          <AchievementsPanel raGameId={raGameId} gameTitle={game.title} />
         </div>
 
         <div className="lg:col-span-4 space-y-12">
           <section>
-            <h2 className="text-sm font-black uppercase tracking-[0.3em] text-zinc-600 mb-8">Especificações</h2>
+            <h2 className="text-sm font-black uppercase tracking-[0.3em] text-zinc-600 mb-8">
+              Especificações
+            </h2>
             <div className="grid grid-cols-2 gap-3">
-              {game.technical_specs && Object.entries(game.technical_specs)
-                .filter(([, v]) => typeof v !== "boolean")
-                .slice(0, 8)
-                .map(([key, value]) => (
-                  <div key={key} className="bg-zinc-900/30 p-3 rounded-lg border border-zinc-800/50">
-                    <span className="block text-[9px] uppercase text-zinc-600 font-bold tracking-wider mb-1">{key.replace(/_/g, " ")}</span>
-                    <span className="text-zinc-300 font-medium text-sm">{String(value)}</span>
-                  </div>
-                ))}
+              {game.technical_specs &&
+                Object.entries(game.technical_specs)
+                  .filter(([, v]) => typeof v !== "boolean")
+                  .slice(0, 8)
+                  .map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="bg-zinc-900/30 p-3 rounded-lg border border-zinc-800/50"
+                    >
+                      <span className="block text-[9px] uppercase text-zinc-600 font-bold tracking-wider mb-1">
+                        {key.replace(/_/g, " ")}
+                      </span>
+                      <span className="text-zinc-300 font-medium text-sm">
+                        {String(value)}
+                      </span>
+                    </div>
+                  ))}
             </div>
           </section>
 
           <section className="space-y-6 pt-8 border-t border-zinc-900">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Desenvolvedor</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">
+                Desenvolvedor
+              </span>
               <span className="text-zinc-300 font-bold">{game.developer}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Distribuidora</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">
+                Distribuidora
+              </span>
               <span className="text-zinc-300 font-bold">{game.publisher}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Lançamento</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">
+                Lançamento
+              </span>
               <span className="text-zinc-300 font-bold">{game.year}</span>
             </div>
           </section>
+
+          {/* Plataforma no RetroAchievements */}
+          {raGameId && (
+            <section className="pt-6 border-t border-zinc-900">
+              <a
+                href={`https://retroachievements.org/game/${raGameId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs text-zinc-600 hover:text-yellow-500 transition group"
+              >
+                <span className="text-lg">🏆</span>
+                <span>Ver página no RetroAchievements</span>
+              </a>
+            </section>
+          )}
         </div>
       </div>
 
-      {showAddRom && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm px-6">
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
-            <button
-              onClick={() => setShowAddRom(false)}
-              className="absolute top-4 right-4 text-zinc-500 hover:text-white transition"
-            >
-              ✕
-            </button>
-            <h2 className="text-xl font-bold mb-2">Cadastrar ROM</h2>
-            <p className="text-sm text-zinc-500 mb-6">
-              Consoles mais antigos cabem tranquilo na nuvem. Jogos grandes (PS1, PSP, Saturn...)
-              ficam só no seu dispositivo — você vai reselecionar a pasta toda vez que for jogar.
-            </p>
-
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 rounded-lg border border-zinc-800 p-4 cursor-pointer hover:border-red-600 transition">
-                <UploadCloud size={22} className="text-red-500 shrink-0" />
-                <span className="text-sm">
-                  <span className="block font-bold text-white">Enviar para a nuvem</span>
-                  <span className="text-zinc-500">Ideal para ROMs pequenas (SNES, NES, GB...)</span>
-                </span>
-                <input type="file" onChange={handleCloudUpload} className="hidden" disabled={savingRom} />
-              </label>
-
-              <label className="flex items-center gap-3 rounded-lg border border-zinc-800 p-4 cursor-pointer hover:border-red-600 transition">
-                <HardDrive size={22} className="text-zinc-400 shrink-0" />
-                <span className="text-sm">
-                  <span className="block font-bold text-white">Manter no dispositivo</span>
-                  <span className="text-zinc-500">Ideal para ROMs grandes (PS1, PSP, Saturn...)</span>
-                </span>
-                <input type="file" onChange={handleLocalRegister} className="hidden" disabled={savingRom} />
-              </label>
-            </div>
-
-            {savingRom && (
-              <p className="mt-4 flex items-center gap-2 text-sm text-zinc-400">
-                <Loader2 className="animate-spin" size={16} /> Salvando...
-              </p>
-            )}
-            {romError && <p className="mt-4 text-sm text-red-500">{romError}</p>}
-          </div>
-        </div>
-      )}
-
-      {showPlayer && rom && (
-        <EmulatorPlayer game={game} onClose={() => setShowPlayer(false)} />
+      {/* Player do EmulatorJS — recebe o arquivo local direto */}
+      {showPlayer && (
+        <EmulatorPlayer
+          game={game}
+          localFile={romFile}
+          onClose={() => {
+            setShowPlayer(false);
+            setRomFile(null);
+          }}
+        />
       )}
     </main>
   );

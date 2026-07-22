@@ -48,7 +48,8 @@ export default function AuthPage() {
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-md rounded-lg bg-black/80 p-10 shadow-xl backdrop-blur-md"
       >
-        <h1 className="mb-8 text-3xl font-bold text-white">Entrar</h1>
+        <h1 className="mb-2 text-3xl font-bold text-white">Acessar Gameplex</h1>
+        <p className="mb-8 text-sm text-zinc-500">Acesso via magic link ou Google. Sem cadastro necessário.</p>
         
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -111,8 +112,8 @@ export default function AuthPage() {
           </p>
         )}
 
-        <p className="mt-8 text-sm text-zinc-500">
-          Novo no Gameplex? <span className="text-white hover:underline cursor-pointer">Assine agora.</span>
+        <p className="mt-8 text-sm text-zinc-500 text-center">
+          Use seu e-mail ou Google para acessar suas listas e favoritos.
         </p>
       </motion.div>
     </div>
