@@ -87,6 +87,55 @@
 
 ---
 
+### ⚡ CRIAR TABELA PLAY HISTORY
+
+> Histórico de jogos implementado no código. Falta criar a tabela no Supabase.
+
+Execute no SQL Editor ([link direto](https://supabase.com/dashboard/project/nznmpfuomfgzmunyhwjb/sql/new)):
+
+```sql
+CREATE TABLE IF NOT EXISTS play_history (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  game_id uuid NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  played_at timestamptz DEFAULT now(),
+  duration_seconds integer DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_play_history_user ON play_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_play_history_game ON play_history(game_id);
+CREATE INDEX IF NOT EXISTS idx_play_history_date ON play_history(played_at DESC);
+
+ALTER TABLE play_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own play history"
+  ON play_history FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own play history"
+  ON play_history FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own play history"
+  ON play_history FOR DELETE USING (auth.uid() = user_id);
+```
+
+---
+
+### 🔧 YOUTUBE API KEY
+
+> Script de enriquecimento pronto. Falta apenas adicionar a chave.
+
+1. Obtenha uma chave em [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Edite `.env.local` e substitua:
+   ```
+   YOUTUBE_API_KEY=sua_chave_real
+   ```
+3. Rode o enriquecimento:
+   ```bash
+   npm run enrich
+   ```
+
+---
+
 ### 🔜 Melhorias Futuras
 
 - [ ] **Salvar saves automaticamente** no Supabase Storage (EmulatorJS export save state)
