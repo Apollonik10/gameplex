@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Play, Heart, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useFavorites } from "@/hooks/useFavorites";
+import { usePlayHistory } from "@/hooks/usePlayHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { EJS_SYSTEMS } from "@/lib/constants";
 import EmulatorPlayer from "@/components/EmulatorPlayer";
@@ -13,6 +14,7 @@ import EmulatorPlayer from "@/components/EmulatorPlayer";
 export default function GameCard({ game }) {
   const { user } = useAuth();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites(user?.id);
+  const { record } = usePlayHistory(user?.id);
   const [showPlayer, setShowPlayer] = useState(false);
   const [romFile, setRomFile] = useState(null);
 
@@ -48,6 +50,8 @@ export default function GameCard({ game }) {
       if (file) {
         setRomFile(file);
         setShowPlayer(true);
+        // Registrar no histórico se logado
+        if (user) record.mutate(game.id);
       }
     };
     input.click();

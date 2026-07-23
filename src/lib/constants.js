@@ -11,6 +11,7 @@ export const QUERY_KEYS = {
   PLATFORMS: 'platforms',
   FAVORITES: 'favorites',
   GLOSSARY: 'glossary',
+  PLAY_HISTORY: 'playHistory',
 };
 
 export const STALE_TIMES = {

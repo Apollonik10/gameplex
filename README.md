@@ -30,10 +30,13 @@ Catálogo de jogos retro estilo Netflix. PWA mobile-first com dark theme, carros
 - **Página de detalhe** com specs técnicas JSONB, galeria de screenshots, YouTube embed
 - **Glossário técnico** com navegação A-Z e tooltips inline
 - **Sistema de favoritos** (auth obrigatória)
+- **Histórico de jogos** — registra quando o usuário joga
+- **RetroAchievements** — conquistas retro integradas
 - **Auth** via Magic Link e Google OAuth
 - **PWA** com service worker e manifest
 - **14 plataformas** mapeadas com cores oficiais
 - **Emulador** EmulatorJS com cores por plataforma
+- **Enriquecimento automático** — RAWG API para covers e metadados
 
 ---
 

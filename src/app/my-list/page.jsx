@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { getUserList } from "@/services/favorite.service";
+import { getPlayHistory } from "@/services/play-history.service";
 import GameCard from "@/components/game-card/GameCard";
 import { useAuth } from "@/hooks/useAuth";
-import { Heart, Gamepad2, Star } from "lucide-react";
+import { Heart, Gamepad2, Star, Clock } from "lucide-react";
 import Link from "next/link";
 
 const TABS = [
   { key: "favorites", label: "Favoritos", icon: Heart },
   { key: "played", label: "Jogados", icon: Gamepad2 },
   { key: "wishlist", label: "Wishlist", icon: Star },
+  { key: "history", label: "Histórico", icon: Clock },
 ];
 
 export default function MyListPage() {
@@ -20,7 +22,11 @@ export default function MyListPage() {
 
   useEffect(() => {
     if (!user) return;
-    getUserList(user.id, activeTab).then(setGames);
+    if (activeTab === "history") {
+      getPlayHistory(user.id).then(setGames);
+    } else {
+      getUserList(user.id, activeTab).then(setGames);
+    }
   }, [user, activeTab]);
 
   if (loading) return (

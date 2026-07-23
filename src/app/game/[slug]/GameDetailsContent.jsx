@@ -10,12 +10,14 @@ import GlossaryTooltip from "@/components/glossary-tooltip/GlossaryTooltip";
 import EmulatorPlayer from "@/components/EmulatorPlayer";
 import AchievementsPanel from "@/components/achievements/AchievementsPanel";
 import { useFavorites } from "@/hooks/useFavorites";
+import { usePlayHistory } from "@/hooks/usePlayHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { EJS_SYSTEMS } from "@/lib/constants";
 
 export default function GameDetailsContent({ game, glossary = [] }) {
   const { user } = useAuth();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites(user?.id);
+  const { record } = usePlayHistory(user?.id);
   const favorite = isFavorite(game.id);
 
   const [showPlayer, setShowPlayer] = useState(false);
@@ -33,6 +35,8 @@ export default function GameDetailsContent({ game, glossary = [] }) {
       if (file) {
         setRomFile(file);
         setShowPlayer(true);
+        // Registrar no histórico se logado
+        if (user) record.mutate(game.id);
       }
     };
     input.click();

@@ -90,7 +90,7 @@
 ### 🔜 Melhorias Futuras
 
 - [ ] **Salvar saves automaticamente** no Supabase Storage (EmulatorJS export save state)
-- [ ] **Histórico de jogados** — registrar quando o usuário lança um jogo
+- [x] **Histórico de jogados** — registrar quando o usuário lança um jogo
 - [ ] **Wishlist e listas personalizadas** — expandir `my-list`
 - [ ] **Busca por conquistas** — filtrar jogos que têm RetroAchievements mapeado
 - [ ] **Perfil de usuário** — página com estatísticas, jogos jogados, conquistas
@@ -109,17 +109,18 @@ src/
 │   ├── auth/          ← Magic Link + Google OAuth (sem cadastro)
 │   ├── game/[slug]/   ← Detalhe do jogo + Emulador + Conquistas
 │   ├── glossary/      ← Glossário técnico A-Z
-│   ├── my-list/       ← Favoritos, Jogados, Wishlist
+│   ├── my-list/       ← Favoritos, Jogados, Wishlist, Histórico
 │   └── platform/      ← Jogos por plataforma
 ├── components/
-│   ├── achievements/  ← AchievementsPanel (RetroAchievements)  ← NOVO
+│   ├── achievements/  ← AchievementsPanel (RetroAchievements)
 │   ├── carousel/      ← Carrossel horizontal por plataforma
-│   ├── game-card/     ← Card com botão Jogar + Favoritar       ← ATUALIZADO
+│   ├── game-card/     ← Card com botão Jogar + Favoritar + Histórico
 │   ├── hero-banner/   ← Banner principal animado
 │   ├── platform-bios/ ← Upload de BIOS (opcional)
-│   └── EmulatorPlayer ← Player EmulatorJS refatorado           ← ATUALIZADO
+│   └── EmulatorPlayer ← Player EmulatorJS refatorado
 ├── services/
-│   ├── retroachievements.service.js  ← Conquistas               ← NOVO
+│   ├── retroachievements.service.js  ← Conquistas
+│   ├── play-history.service.js       ← Histórico de jogos       ← NOVO
 │   ├── rom.service.js                ← BIOS + ROMs cloud
 │   ├── game.service.js
 │   ├── favorite.service.js
@@ -127,6 +128,7 @@ src/
 └── hooks/
     ├── useAuth.js
     ├── useFavorites.js
+    ├── usePlayHistory.js             ← Histórico                 ← NOVO
     └── ...
 ```
 
