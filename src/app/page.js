@@ -11,7 +11,7 @@ import { useGameStore } from "@/store/useGameStore";
 import { useDebounce } from "@/hooks/useDebounce";
 
 function HomeContent() {
-  const [data, setData] = useState({ featuredGame: null, platforms: [] });
+  const [data, setData] = useState({ featuredGames: [], platforms: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { searchQuery } = useGameStore();
@@ -35,11 +35,10 @@ function HomeContent() {
           return;
         }
 
-        const { data: featured } = await client
+        const { data: allGames } = await client
           .from("games")
-          .select("*")
-          .limit(1)
-          .single();
+          .select("*, platforms(short_name)")
+          .limit(100);
 
         let query = client.from("platforms").select("id, name, games(*)");
         if (platformFilter) {
@@ -51,7 +50,9 @@ function HomeContent() {
 
         const { data: plats } = await query;
         if (!cancelled) {
-          setData({ featuredGame: featured, platforms: plats || [] });
+          // Embaralha e pega até 8 jogos para o hero rotativo
+          const shuffled = (allGames || []).sort(() => Math.random() - 0.5).slice(0, 8);
+          setData({ featuredGames: shuffled, platforms: plats || [] });
         }
       } catch (e) {
         if (!cancelled) {
@@ -115,8 +116,8 @@ function HomeContent() {
     <main className="flex min-h-screen flex-col bg-zinc-950 pb-20 overflow-x-hidden">
       {debouncedQuery.trim() === "" ? (
         <>
-          <HeroBanner game={data.featuredGame} />
-          <section className="mt-[-100px] relative z-20">
+          <HeroBanner games={data.featuredGames} />
+          <section className="relative z-20">
             {data.platforms.map((platform) => (
               <Carousel
                 key={platform.id}

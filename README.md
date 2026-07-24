@@ -1,6 +1,6 @@
 # GamePlex — RetroVault
 
-Catálogo de jogos retro estilo Netflix. PWA mobile-first com dark theme, carrosséis por plataforma, hero banner, página de detalhes com specs técnicas, vídeos do YouTube, glossário de termos de emulação e sistema de favoritos.
+Catálogo de jogos retro estilo Netflix. PWA mobile-first com dark theme, carrosséis por plataforma, hero banner rotativo, página de detalhes com specs técnicas, vídeos do YouTube, conquistas RetroAchievements e sistema de favoritos.
 
 **Demo:** [gameplex-ten.vercel.app](https://gameplex-ten.vercel.app)
 
@@ -24,19 +24,20 @@ Catálogo de jogos retro estilo Netflix. PWA mobile-first com dark theme, carros
 
 ## Funcionalidades
 
-- **Hero Banner** animado com parallax
+- **Hero Banner rotativo** — troca automática a cada 20s com jogos aleatórios
 - **Carrosséis por plataforma** (SNES, NES, PS1, Genesis, GB, GBA, N64...)
 - **Busca** com debounce 300ms e filtros por URL
 - **Página de detalhe** com specs técnicas JSONB, galeria de screenshots, YouTube embed
 - **Glossário técnico** com navegação A-Z e tooltips inline
 - **Sistema de favoritos** (auth obrigatória)
 - **Histórico de jogos** — registra quando o usuário joga
-- **RetroAchievements** — conquistas retro integradas
-- **Auth** via Magic Link e Google OAuth
+- **RetroAchievements** — conquistas retro integradas com badges e progresso
+- **Auth** via Magic Link e Google OAuth (sem cadastro obrigatório)
 - **PWA** com service worker e manifest
 - **14 plataformas** mapeadas com cores oficiais
 - **Emulador** EmulatorJS com cores por plataforma
-- **Enriquecimento automático** — RAWG API para covers e metadados
+- **Enriquecimento automático** — RAWG API para covers e YouTube API para vídeos
+- **22 jogos** catalogados com covers, vídeos e conquistas
 
 ---
 
@@ -44,20 +45,34 @@ Catálogo de jogos retro estilo Netflix. PWA mobile-first com dark theme, carros
 
 ```
 src/
-├── app/              ← Rotas (App Router)
-├── components/       ← UI components
-├── hooks/            ← Custom hooks (useAuth, useGames, useFavorites, useDebounce)
-├── lib/              ← Constantes, tipos, clientes Supabase
-├── services/         ← Camada de serviço (SRP, DIP)
+├── app/
+│   ├── auth/          ← Magic Link + Google OAuth
+│   ├── game/[slug]/   ← Detalhe do jogo + Emulador + Conquistas
+│   ├── glossary/      ← Glossário técnico A-Z
+│   ├── my-list/       ← Favoritos, Jogados, Wishlist, Histórico
+│   └── platform/      ← Jogos por plataforma
+├── components/
+│   ├── achievements/  ← AchievementsPanel (RetroAchievements)
+│   ├── carousel/      ← Carrossel horizontal por plataforma
+│   ├── game-card/     ← Card com botão Jogar + Favoritar
+│   ├── hero-banner/   ← Banner rotativo (20s) com navegação
+│   ├── youtube-player/← Player de vídeo YouTube
+│   └── EmulatorPlayer ← Player EmulatorJS (local + cloud)
+├── services/
+│   ├── retroachievements.service.js
+│   ├── play-history.service.js
+│   ├── rom.service.js
 │   ├── game.service.js
-│   ├── platform.service.js
 │   ├── favorite.service.js
-│   ├── glossary.service.js
-│   ├── enrichment.service.js
 │   ├── rawg.service.js
-│   ├── youtube.service.js
-│   └── http.service.js
-└── store/            ← Zustand store
+│   └── youtube.service.js
+├── hooks/
+│   ├── useAuth.js
+│   ├── useFavorites.js
+│   ├── usePlayHistory.js
+│   └── useGames.js
+└── lib/
+    └── constants.js   ← EJS_SYSTEMS, config
 ```
 
 ### Princípios SOLID aplicados
@@ -76,7 +91,7 @@ npm install
 
 # Configurar variáveis de ambiente
 cp .env.example .env.local
-# Preencher chaves: SUPABASE_URL, SUPABASE_ANON_KEY, RAWG_API_KEY, YOUTUBE_API_KEY
+# Preencher chaves (ver tabela abaixo)
 
 # Rodar em desenvolvimento
 npm run dev
@@ -87,12 +102,15 @@ npm run build
 
 ### Variáveis de ambiente
 
-| Variável | Descrição |
-|----------|-----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key do Supabase |
-| `RAWG_API_KEY` | Chave da API RAWG |
-| `YOUTUBE_API_KEY` | Chave da YouTube Data API v3 |
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | URL do projeto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Anon key do Supabase |
+| `SUPABASE_SERVICE_ROLE` | ✅ | Service role key (scripts) |
+| `RAWG_API_KEY` | 🔧 Enrich | Chave RAWG (só para `npm run enrich`) |
+| `YOUTUBE_API_KEY` | ✅ | Chave YouTube Data API v3 |
+| `NEXT_PUBLIC_RA_USERNAME` | 🏆 | Username no RetroAchievements |
+| `NEXT_PUBLIC_RA_API_KEY` | 🏆 | Web API Key do RetroAchievements |
 
 ---
 
@@ -104,6 +122,7 @@ npm run build
 | `npm run build` | Build de produção (webpack) |
 | `npm run start` | Iniciar servidor de produção |
 | `npm run enrich` | Enriquecer jogos via APIs RAWG/YouTube |
+| `npm run enrich:covers` | Atualizar apenas covers |
 
 ---
 
@@ -112,36 +131,22 @@ npm run build
 - **Supabase** — Banco de dados, autenticação, storage
 - **RAWG Video Games Database** — Metadados, screenshots, ratings (+500k jogos)
 - **YouTube Data API v3** — Trailers e gameplay
+- **RetroAchievements** — Conquistas retro (API pública, sem backend)
 
 ---
 
-## Launcher de Emuladores (novo)
+## Launcher de Emuladores
 
-O Gameplex agora também **inicializa** os jogos, não só cataloga. Baseado no
-[EmulatorJS](https://emulatorjs.org) (frontend web para cores do RetroArch em WebAssembly,
-100% no navegador, sem backend de emulação).
+O Gameplex **inicializa** os jogos via [EmulatorJS](https://emulatorjs.org) (frontend web para cores do RetroArch em WebAssembly, 100% no navegador).
 
-**Estratégia de armazenamento dupla:**
-- **ROMs pequenas** (SNES, NES, GB, GBC, GBA, Genesis, SMS, GG, Atari2600...) →
-  enviadas para um bucket privado no Supabase Storage, servidas via signed URL de curta duração.
-- **ROMs grandes** (PS1, PSP, Saturn, N64, NDS...) → ficam **só no dispositivo**.
-  O app guarda apenas o nome/tamanho do arquivo; na hora de jogar, você reseleciona a
-  pasta local (`<input type="file" webkitdirectory>`) e o app localiza o arquivo pelo nome.
-  Nada é enviado para a internet nesse fluxo.
+**Estratégia de ROMs:**
+- **ROMs pequenas** (SNES, NES, GB, GBA, Genesis...) → Supabase Storage (signed URL)
+- **ROMs grandes** (PS1, PSP, N64, NDS...) → arquivo local no dispositivo
+- **Sem login obrigatório** — basta selecionar o arquivo local
 
-> PS2 não está disponível: o EmulatorJS ainda não tem um core WebAssembly pra esse sistema.
+**Plataformas suportadas:** NES, SNES, GB, GBC, GBA, N64, NDS, Genesis, SMS, GG, PS1, PSP, Atari2600, NeoGeo, MAME
 
-**Setup necessário (uma vez):**
-1. Rodar `supabase_migration_roms.sql` no SQL Editor do Supabase Studio — cria a tabela
-   `roms` e o bucket `roms` no Storage, com RLS por usuário.
-2. Pronto — o botão "Cadastrar ROM" aparece na página de detalhe de qualquer jogo com
-   sistema suportado.
-
-**Arquivos novos:**
-- `src/services/rom.service.js` — upload/registro/signed URL de ROMs
-- `src/hooks/useLocalRom.js` — seletor de pasta local + matching por nome de arquivo
-- `src/components/EmulatorPlayer.jsx` — player real via EmulatorJS (antes era só uma simulação visual)
-- `src/lib/constants.js` — novo `EJS_SYSTEMS` (mapa plataforma → sistema EmulatorJS)
+---
 
 ## Deploy
 

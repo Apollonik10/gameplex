@@ -35,10 +35,11 @@ export default function YouTubePlayer({ videoId, title }) {
         </button>
       ) : (
         <iframe
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`}
           title={title || "YouTube video player"}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
+          credentialless
           className="h-full w-full border-0"
         />
       )}

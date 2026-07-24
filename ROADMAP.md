@@ -27,119 +27,40 @@
 - [x] Migration SQL para tabela `roms` e bucket no Supabase Storage
 - [x] BIOS upload por plataforma (opcional)
 - [x] `next.config.js` com `remotePatterns` para imagens externas (RAWG, Supabase, Google)
-- [x] Headers CORS (`Cross-Origin-Opener-Policy` + `Cross-Origin-Embedder-Policy`) para SharedArrayBuffer
+- [x] Headers CORS (`Cross-Origin-Opener-Policy` + `Cross-Origin-Embedder-Policy: credentialless`) para SharedArrayBuffer + YouTube embed
 
-### v3 — Refatoração & RetroAchievements (atual)
+### v3 — Refatoração & RetroAchievements
 - [x] **Imagens corrigidas** — `next.config.js` com `remotePatterns` para todos os domínios usados
 - [x] **Sistema de Cadastro de ROM removido** — sem obrigatoriedade de login para jogar
 - [x] **Botão "Jogar" em todos os jogos** — nos GameCards e na página de detalhe
-  - Ao clicar, abre seletor de arquivo local direto (sem upload, sem servidor)
-  - Lança o EmulatorJS automaticamente com o arquivo selecionado
 - [x] **`EmulatorPlayer` refatorado** — aceita `localFile` (File object) direto via props
 - [x] **Integração RetroAchievements** — `retroachievements.service.js` criado
-  - API pública REST, sem backend necessário
-  - `getGameAchievements(raGameId)` — conquistas por jogo
-  - `getGameWithUserProgress(raGameId, username)` — progresso do usuário
 - [x] **Componente `AchievementsPanel`** — exibido na página de detalhe
-  - Barra de progresso, grid de badges, pontos por conquista
-  - Link direto para retroachievements.org
 - [x] **Página de Auth atualizada** — removido texto de "Assine agora" / registro
-- [x] **`.env.local` configurado** — todas as chaves de API adicionadas (Supabase, RAWG, RetroAchievements)
-- [x] **API RetroAchievements testada** — conexão validada com sucesso (Super Mario Bros: 76 conquistas)
-- [x] **Migration SQL criada** — `supabase_migration_retroachievements.sql` pronta para executar
+- [x] **`.env.local` configurado** — todas as chaves de API adicionadas
+- [x] **API RetroAchievements testada** — conexão validada com sucesso
+- [x] **Migration SQL executada** — `ra_game_id` adicionado na tabela `games`
+
+### v4 — Infraestrutura & Dados
+- [x] **Tabela `play_history` criada** — com RLS, indexes e políticas de segurança
+- [x] **`ra_game_id` mapeado** — 6 jogos com IDs do RetroAchievements no Supabase
+- [x] **YouTube API Key configurada** — vídeos adicionados para todos os 22 jogos
+- [x] **Hero Banner rotativo** — troca automática a cada 20 segundos com jogos aleatórios
+- [x] **Correção de sobreposição** — removido `mt-[-100px]` que causava overlap
+- [x] **Player de vídeo corrigido** — COEP `credentialless` permite YouTube em iframe
+- [x] **Auth page limpa** — removidos textos de assinatura/cadastro
 
 ---
 
 ## 🔜 Próximos Passos
 
-### ⚡ PRIORIDADE IMEDIATA — Ativar RetroAchievements
+### 🔧 Melhorias de UX
+- [ ] **Auto-detectar emulador no dispositivo** — ao clicar "Jogar", identificar o emulador instalado e abrir direto (sem file picker)
+- [ ] **Lembrar pasta de ROMs** — pedir acesso à pasta na primeira vez, depois abrir direto
+- [ ] **Streaming de ROMs do Supabase** — jogar direto do cloud sem precisar ter o arquivo local
 
-> As conquistas já estão integradas no código. Configuração parcialmente concluída:
-
-1. ~~**Criar conta no RetroAchievements**~~ ✅
-   - Conta criada: `apollonik10`
-
-2. ~~**Adicionar variáveis de ambiente**~~ ✅
-   - `.env.local` configurado com todas as chaves
-
-3. **Adicionar `ra_game_id` nos jogos do Supabase** ← **PRÓXIMO PASSO**
-   - Execute no SQL Editor do Supabase ([link direto](https://supabase.com/dashboard/project/nznmpfuomfgzmunyhwjb/sql/new)):
-     ```sql
-     ALTER TABLE games ADD COLUMN IF NOT EXISTS ra_game_id integer;
-     CREATE INDEX IF NOT EXISTS idx_games_ra_game_id ON games(ra_game_id);
-
-     UPDATE games SET ra_game_id = 7346 WHERE slug = 'super-mario-world';
-     UPDATE games SET ra_game_id = 1446 WHERE slug = 'super-mario-bros';
-     UPDATE games SET ra_game_id = 1 WHERE slug = 'sonic-the-hedgehog';
-     UPDATE games SET ra_game_id = 11240 WHERE slug = 'castlevania-symphony-of-the-night';
-     UPDATE games SET ra_game_id = 4748 WHERE slug = 'pokemon-red';
-     UPDATE games SET ra_game_id = 10087 WHERE slug = 'the-legend-of-zelda-ocarina-of-time';
-     ```
-   - Exemplos de IDs conhecidos:
-     | Jogo | Platform | ra_game_id |
-     |------|----------|-----------|
-     | Super Mario World | SNES | 7346 |
-     | Super Mario Bros | NES | 1446 |
-     | Sonic the Hedgehog | Genesis | 1 |
-     | Castlevania: SotN | PS1 | 11240 |
-     | Pokémon Red | GB | 4748 |
-     | The Legend of Zelda: OoT | N64 | 10087 |
-
----
-
-### ⚡ CRIAR TABELA PLAY HISTORY
-
-> Histórico de jogos implementado no código. Falta criar a tabela no Supabase.
-
-Execute no SQL Editor ([link direto](https://supabase.com/dashboard/project/nznmpfuomfgzmunyhwjb/sql/new)):
-
-```sql
-CREATE TABLE IF NOT EXISTS play_history (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  game_id uuid NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-  played_at timestamptz DEFAULT now(),
-  duration_seconds integer DEFAULT 0
-);
-
-CREATE INDEX IF NOT EXISTS idx_play_history_user ON play_history(user_id);
-CREATE INDEX IF NOT EXISTS idx_play_history_game ON play_history(game_id);
-CREATE INDEX IF NOT EXISTS idx_play_history_date ON play_history(played_at DESC);
-
-ALTER TABLE play_history ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own play history"
-  ON play_history FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own play history"
-  ON play_history FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own play history"
-  ON play_history FOR DELETE USING (auth.uid() = user_id);
-```
-
----
-
-### 🔧 YOUTUBE API KEY
-
-> Script de enriquecimento pronto. Falta apenas adicionar a chave.
-
-1. Obtenha uma chave em [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Edite `.env.local` e substitua:
-   ```
-   YOUTUBE_API_KEY=sua_chave_real
-   ```
-3. Rode o enriquecimento:
-   ```bash
-   npm run enrich
-   ```
-
----
-
-### 🔜 Melhorias Futuras
-
+### 🎮 Funcionalidades
 - [ ] **Salvar saves automaticamente** no Supabase Storage (EmulatorJS export save state)
-- [x] **Histórico de jogados** — registrar quando o usuário lança um jogo
 - [ ] **Wishlist e listas personalizadas** — expandir `my-list`
 - [ ] **Busca por conquistas** — filtrar jogos que têm RetroAchievements mapeado
 - [ ] **Perfil de usuário** — página com estatísticas, jogos jogados, conquistas
@@ -164,12 +85,13 @@ src/
 │   ├── achievements/  ← AchievementsPanel (RetroAchievements)
 │   ├── carousel/      ← Carrossel horizontal por plataforma
 │   ├── game-card/     ← Card com botão Jogar + Favoritar + Histórico
-│   ├── hero-banner/   ← Banner principal animado
+│   ├── hero-banner/   ← Banner rotativo (20s) com jogos aleatórios
 │   ├── platform-bios/ ← Upload de BIOS (opcional)
+│   ├── youtube-player/← Player de vídeo com thumbnail + embed
 │   └── EmulatorPlayer ← Player EmulatorJS refatorado
 ├── services/
 │   ├── retroachievements.service.js  ← Conquistas
-│   ├── play-history.service.js       ← Histórico de jogos       ← NOVO
+│   ├── play-history.service.js       ← Histórico de jogos
 │   ├── rom.service.js                ← BIOS + ROMs cloud
 │   ├── game.service.js
 │   ├── favorite.service.js
@@ -177,7 +99,7 @@ src/
 └── hooks/
     ├── useAuth.js
     ├── useFavorites.js
-    ├── usePlayHistory.js             ← Histórico                 ← NOVO
+    ├── usePlayHistory.js             ← Histórico
     └── ...
 ```
 
@@ -187,7 +109,8 @@ src/
 |----------|-------------|-----------|
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | URL do projeto Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Anon key do Supabase |
+| `SUPABASE_SERVICE_ROLE` | ✅ | Service role key (scripts) |
 | `RAWG_API_KEY` | 🔧 Enrich | Chave RAWG (só para `npm run enrich`) |
-| `YOUTUBE_API_KEY` | 🔧 Enrich | Chave YouTube (só para `npm run enrich`) |
+| `YOUTUBE_API_KEY` | ✅ | Chave YouTube Data API v3 |
 | `NEXT_PUBLIC_RA_USERNAME` | 🏆 RetroAch. | Username no RetroAchievements |
 | `NEXT_PUBLIC_RA_API_KEY` | 🏆 RetroAch. | Web API Key do RetroAchievements |
