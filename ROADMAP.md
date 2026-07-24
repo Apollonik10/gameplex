@@ -55,9 +55,14 @@
 ## 🔜 Próximos Passos
 
 ### 🔧 Melhorias de UX
-- [ ] **Auto-detectar emulador no dispositivo** — ao clicar "Jogar", identificar o emulador instalado e abrir direto (sem file picker)
-- [ ] **Lembrar pasta de ROMs** — pedir acesso à pasta na primeira vez, depois abrir direto
+- [x] **Lembrar pasta de ROMs** — File System Access API + IndexedDB. Na primeira vez pede acesso, depois procura ROM automaticamente pelo nome do jogo
 - [ ] **Streaming de ROMs do Supabase** — jogar direto do cloud sem precisar ter o arquivo local
+- [ ] **Covers originais via IGDB/TheGamesDB** — RAWG retorna screenshots para muitos jogos retro. Integrar IGDB (Twitch API) ou TheGamesDB para box art real
+
+### 🖼️ Covers & Mídia
+- [ ] **IGDB API** — box art oficial para jogos retro (requer Twitch Client ID). Melhor cobertura que RAWG para títulos antigos
+- [ ] **TheGamesDB API** — alternativa gratuita com covers, fanart e banners por plataforma
+- [ ] **ScreenScraper.fr** — screenshots, covers e vídeos para ROMs (baseada em hash do arquivo)
 
 ### 🎮 Funcionalidades
 - [ ] **Salvar saves automaticamente** no Supabase Storage (EmulatorJS export save state)

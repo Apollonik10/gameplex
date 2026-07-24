@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Heart, Share2, ArrowLeft, Camera, MonitorPlay, Gamepad2, Play } from "lucide-react";
+import { Heart, Share2, ArrowLeft, Camera, MonitorPlay, Gamepad2, Play, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import PlatformBadge from "@/components/platform-badge/PlatformBadge";
 import YouTubePlayer from "@/components/youtube-player/YouTubePlayer";
@@ -13,6 +13,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { usePlayHistory } from "@/hooks/usePlayHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { EJS_SYSTEMS } from "@/lib/constants";
+import { getSavedFolder, findRomInFolder, pickRomFolder, isSupported as isFsSupported } from "@/lib/rom-folder";
 
 export default function GameDetailsContent({ game, glossary = [] }) {
   const { user } = useAuth();
@@ -21,12 +22,34 @@ export default function GameDetailsContent({ game, glossary = [] }) {
   const favorite = isFavorite(game.id);
 
   const [showPlayer, setShowPlayer] = useState(false);
-  const [romFile, setRomFile] = useState(null); // arquivo selecionado localmente
+  const [romFile, setRomFile] = useState(null);
+  const [folderSaved, setFolderSaved] = useState(false);
 
   const systemSupported = Boolean(EJS_SYSTEMS[game.platforms?.short_name]);
 
-  // Ao clicar em "Jogar", abre seletor de arquivo local direto
-  const handlePlayClick = () => {
+  // Verifica se já tem pasta salva ao montar
+  useEffect(() => {
+    if (isFsSupported()) {
+      getSavedFolder().then((h) => setFolderSaved(!!h));
+    }
+  }, []);
+
+  const handlePlayClick = async () => {
+    // Tenta encontrar a ROM na pasta salva
+    if (isFsSupported()) {
+      const dir = await getSavedFolder();
+      if (dir) {
+        const file = await findRomInFolder(dir, game);
+        if (file) {
+          setRomFile(file);
+          setShowPlayer(true);
+          if (user) record.mutate(game.id);
+          return;
+        }
+      }
+    }
+
+    // Fallback: seletor de arquivo
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".zip,.sfc,.smc,.nes,.gb,.gbc,.gba,.n64,.z64,.v64,.nds,.gen,.md,.sms,.gg,.iso,.cso,.pbp,.bin,.cue,.a26,.rom";
@@ -35,11 +58,15 @@ export default function GameDetailsContent({ game, glossary = [] }) {
       if (file) {
         setRomFile(file);
         setShowPlayer(true);
-        // Registrar no histórico se logado
         if (user) record.mutate(game.id);
       }
     };
     input.click();
+  };
+
+  const handleSaveFolder = async () => {
+    const handle = await pickRomFolder();
+    if (handle) setFolderSaved(true);
   };
 
   const toggleFavorite = () => {
@@ -178,6 +205,21 @@ export default function GameDetailsContent({ game, glossary = [] }) {
                 <button className="flex items-center justify-center rounded-full bg-zinc-800/80 backdrop-blur-sm p-4 hover:bg-zinc-700 transition border border-zinc-700">
                   <Share2 size={20} />
                 </button>
+
+                {isFsSupported() && systemSupported && (
+                  <button
+                    onClick={handleSaveFolder}
+                    title={folderSaved ? "Pasta de ROMs salva" : "Salvar pasta de ROMs"}
+                    className={`flex items-center gap-2 rounded px-4 py-4 text-sm font-medium transition border ${
+                      folderSaved
+                        ? "bg-green-900/30 border-green-700 text-green-400"
+                        : "bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500"
+                    }`}
+                  >
+                    <FolderOpen size={18} />
+                    {folderSaved ? "Pasta Salva" : "Salvar Pasta"}
+                  </button>
+                )}
               </div>
 
               {/* Aviso de sistema não suportado no browser */}

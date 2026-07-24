@@ -10,6 +10,7 @@ import { usePlayHistory } from "@/hooks/usePlayHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { EJS_SYSTEMS } from "@/lib/constants";
 import EmulatorPlayer from "@/components/EmulatorPlayer";
+import { getSavedFolder, findRomInFolder, pickRomFolder, isSupported as isFsSupported } from "@/lib/rom-folder";
 
 export default function GameCard({ game }) {
   const { user } = useAuth();
@@ -37,11 +38,26 @@ export default function GameCard({ game }) {
     }
   };
 
-  const handlePlayClick = (e) => {
+  const handlePlayClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!systemSupported) return;
 
+    // Tenta encontrar a ROM na pasta salva
+    if (isFsSupported()) {
+      const dir = await getSavedFolder();
+      if (dir) {
+        const file = await findRomInFolder(dir, game);
+        if (file) {
+          setRomFile(file);
+          setShowPlayer(true);
+          if (user) record.mutate(game.id);
+          return;
+        }
+      }
+    }
+
+    // Fallback: abre o seletor de arquivo
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".zip,.sfc,.smc,.nes,.gb,.gbc,.gba,.n64,.z64,.v64,.nds,.gen,.md,.sms,.gg,.iso,.cso,.pbp,.bin,.cue,.a26,.rom";
@@ -50,7 +66,6 @@ export default function GameCard({ game }) {
       if (file) {
         setRomFile(file);
         setShowPlayer(true);
-        // Registrar no histórico se logado
         if (user) record.mutate(game.id);
       }
     };
@@ -81,7 +96,6 @@ export default function GameCard({ game }) {
             </h3>
 
             <div className="mb-3 flex gap-2">
-              {/* Botão Jogar */}
               {systemSupported ? (
                 <button
                   onClick={handlePlayClick}
@@ -127,7 +141,6 @@ export default function GameCard({ game }) {
         </motion.div>
       </Link>
 
-      {/* EmulatorJS Player inline */}
       {showPlayer && (
         <EmulatorPlayer
           game={game}
